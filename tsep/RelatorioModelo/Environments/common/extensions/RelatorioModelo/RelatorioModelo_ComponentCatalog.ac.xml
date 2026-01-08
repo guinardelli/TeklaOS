@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CatalogModel Version="1.0">
+  <ComponentCatalogItems>
+    <CatalogMacroModelingItem>
+      <DisplayName>Relatorio do Modelo</DisplayName>
+      <MacroFileName>MarnaTeklaOS.cs</MacroFileName>
+      <Description>Relatorio do modelo e pecas selecionadas.</Description>
+      <MacroLocation>GLOBAL</MacroLocation>
+    </CatalogMacroModelingItem>
+  </ComponentCatalogItems>
+  <ComponentCatalogGroups>
+    <ComponentCatalogGroup>
+      <GroupIdString>Root_Group_ID</GroupIdString>
+      <GroupName>albl_Root_fixed_group_name</GroupName>
+      <GroupChildren>
+        <ComponentCatalogGroupPlaceholder>
+          <GroupIdString>1C5E6D21-DF50-4921-BCEE-A0440858AD09</GroupIdString>
+          <GroupName>TeklaOS</GroupName>
+        </ComponentCatalogGroupPlaceholder>
+      </GroupChildren>
+    </ComponentCatalogGroup>
+    <ComponentCatalogGroup>
+      <GroupIdString>1C5E6D21-DF50-4921-BCEE-A0440858AD09</GroupIdString>
+      <GroupName>TeklaOS</GroupName>
+      <GroupChildren>
+        <ComponentCatalogItemPlaceholder>
+          <ItemIdString>CatalogMacroModelingItem?MarnaTeklaOS?GLOBAL</ItemIdString>
+        </ComponentCatalogItemPlaceholder>
+      </GroupChildren>
+    </ComponentCatalogGroup>
+  </ComponentCatalogGroups>
+</CatalogModel>

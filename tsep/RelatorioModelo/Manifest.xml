@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TEP Version="2.0">
+  <Product Id="RelatorioModelo" UpgradeCode="33473440-E007-43BC-816B-C660C630FC3D" Version="1.0" Language="1033"
+           Name="Relatorio do Modelo" Manufacturer="Marna Pre-Fabricados Ltda" Type="Extension"
+           Description="Relatorio do modelo e pecas selecionadas." IconPath="%TEPDEFINITIONFILEFOLDER%\Icon.png">
+    <TeklaVersions>
+      <TeklaVersion Name="2023.0" />
+      <MinTeklaVersion Name="2023.0" />
+      <MaxTeklaVersion Name="2099.1" />
+    </TeklaVersions>
+  </Product>
+  <SourcePathVariables>
+    <SourcePathVariable Id="TepOutputFolder" Value="C:\TeklaTSEPOutput" Comment="Output folder for the package." />
+    <SourcePathVariable Id="InstallerFolder" Value="%TEPDEFINITIONFILEFOLDER%" />
+  </SourcePathVariables>
+  <TargetPathVariables>
+    <PathVariable Id="EnvironmentsDirectory" Value="%ENVDIR%\" />
+  </TargetPathVariables>
+  <Component Id="RelatorioModelo" Guid="55556D28-A5A2-47B8-98A9-B36DC31246C2">
+    <File Id="EnvironmentFiles" Source="%InstallerFolder%\Environments\*.*" Target="%EnvironmentsDirectory%" Recursive="yes" />
+  </Component>
+  <Feature Id="RelatorioModeloFeature" Title="RelatorioModeloFeature">
+    <ComponentRef ReferenceId="RelatorioModelo" />
+  </Feature>
+</TEP>
