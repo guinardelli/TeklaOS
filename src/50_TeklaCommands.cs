@@ -16,5 +16,7 @@ internal static class TeklaCommands
         }
 
         akit.Callback("acmd_check_database", "1", "main_frame");
+        // Repara o banco de dados de bibliotecas (xslib) apos o reparo do modelo.
+        akit.Callback("acmd_check_database", "XS_LIB_CORRECT", "main_frame");
     }
 }

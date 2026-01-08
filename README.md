@@ -6,9 +6,10 @@ Este projeto contem uma macro para Tekla Structures 2023 e a estrutura de um pac
 
 - Menu principal (WinForms) com botoes organizados em dois grupos:
   - "Relatorios e Acoes":
-    - "Gerar relatorio": mostra informacoes do modelo e do projeto.
-    - "Pecas selecionadas": mostra informacoes das pecas atualmente selecionadas.
-    - "Fechar": fecha o menu.
+  - "Gerar relatorio": mostra informacoes do modelo e do projeto.
+  - "Pecas selecionadas": mostra informacoes das pecas atualmente selecionadas.
+  - "Selecionar pecas": digite os nomes dos conjuntos separados por virgula (ex.: PP1,PP2,VR1) e o sistema seleciona esses conjuntos diretamente no modelo.
+  - "Fechar": fecha o menu.
   - "Limpeza e correcao do modelo":
     - "Reparar modelo e banco de dados": aciona o comando nativo "Diagnosticar e corrigir -> Reparar Modelo".
 - Janela de relatorio:

@@ -124,7 +124,34 @@ internal static class MenuUi
             cardReports.Controls.Add(btnGeral);
             cardReports.Controls.Add(CriarDivisor());
 
-            // --- CARTAO 2: Manutencao ---
+            // --- CARTAO 2: Selecao de pecas ---
+            var cardSelection = CriarCartao("SELECIONAR PECAS");
+
+            var lblSelectionInfo = new Label();
+            lblSelectionInfo.Text = "Digite os nomes dos conjuntos separados por virgula (ex.: PP1,PP2,VR1).";
+            lblSelectionInfo.ForeColor = C_TextoSecundario;
+            lblSelectionInfo.Font = new Font("Segoe UI", 8F);
+            lblSelectionInfo.Dock = DockStyle.Top;
+            lblSelectionInfo.Padding = new Padding(0, 0, 0, 5);
+            lblSelectionInfo.Height = 30;
+
+            var txtSelectionInput = new TextBox();
+            txtSelectionInput.Dock = DockStyle.Top;
+            txtSelectionInput.Height = 30;
+            txtSelectionInput.Font = new Font("Segoe UI", 9F);
+            txtSelectionInput.Margin = new Padding(0, 0, 0, 5);
+
+            var btnSelectParts = CriarBotaoPro("Selecionar pecas", C_DestaqueAzul, false);
+            btnSelectParts.Click += delegate {
+                AssemblySelectionHelper.SelectAssemblies(txtSelectionInput.Text);
+            };
+
+            cardSelection.Controls.Add(btnSelectParts);
+            cardSelection.Controls.Add(txtSelectionInput);
+            cardSelection.Controls.Add(lblSelectionInfo);
+            cardSelection.Controls.Add(CriarDivisor());
+
+            // --- CARTAO 3: Manutencao ---
             var cardMaint = CriarCartao("MANUTENCAO DO SISTEMA");
             
             var btnRepair = CriarBotaoPro("Diagnosticar e Reparar Modelo", C_DestaqueVermelho, true);
@@ -143,6 +170,8 @@ internal static class MenuUi
             cardMaint.Controls.Add(CriarDivisor());
 
             flowLayout.Controls.Add(cardReports);
+            flowLayout.Controls.Add(new Panel { Height = 15 });
+            flowLayout.Controls.Add(cardSelection);
             flowLayout.Controls.Add(new Panel { Height = 15 });
             flowLayout.Controls.Add(cardMaint);
             contentPanel.Controls.Add(flowLayout);

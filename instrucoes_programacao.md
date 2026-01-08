@@ -248,3 +248,10 @@ Erros comuns ao gerar o TSEP:
 
 Observacao:
 - A macro dentro do TSEP e uma copia. Sempre atualize a copia antes de gerar o pacote.
+
+## 12) Novos aprendizados recentes
+
+- Evite `yield` dentro de `try/catch` ao compilar macros: o compilador Tekla 2023 nao aceita essa combinacao, e envolver um `yield return` com `try/catch` gera erros CS1626.
+- Use as sobrecargas antigas de `GetAllReportProperties` e `GetReportProperty` (com `ref`) porque a versão 2023 nao expõe as variantes sem parâmetros; chame `GetAllReportProperties(names, types, rawValues, ref props)` e trate o retorno booleano.
+- Para normalizar nomes e metadata, colecione `string`, `double` e `int` via `GetReportProperty` com `ref` e adicione as strings extraídas de `Hashtable` retornados por `GetAllReportProperties`.
+- Sempre reconstrua `macros/MarnaTeklaOS.cs` e a copia dentro de `tsep/RelatorioModelo/Environments/common/macros/modeling/` através de `scripts/build_macro.ps1` depois de mudar a camada `src/`, garantindo que a copia instalada no Tekla receba `scripts/build_macro.ps1 -UpdateTekla`.
