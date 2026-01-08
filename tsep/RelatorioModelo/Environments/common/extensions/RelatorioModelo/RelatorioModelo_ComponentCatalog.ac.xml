@@ -14,14 +14,14 @@
       <GroupName>albl_Root_fixed_group_name</GroupName>
       <GroupChildren>
         <ComponentCatalogGroupPlaceholder>
-          <GroupIdString>1C5E6D21-DF50-4921-BCEE-A0440858AD09</GroupIdString>
-          <GroupName>TeklaOS</GroupName>
+          <GroupIdString>0D721B6D-0576-4EB6-AF27-1A5A03294E65</GroupIdString>
+          <GroupName>MarnaOS - Utilitários</GroupName>
         </ComponentCatalogGroupPlaceholder>
       </GroupChildren>
     </ComponentCatalogGroup>
     <ComponentCatalogGroup>
-      <GroupIdString>1C5E6D21-DF50-4921-BCEE-A0440858AD09</GroupIdString>
-      <GroupName>TeklaOS</GroupName>
+      <GroupIdString>0D721B6D-0576-4EB6-AF27-1A5A03294E65</GroupIdString>
+      <GroupName>MarnaOS - Utilitários</GroupName>
       <GroupChildren>
         <ComponentCatalogItemPlaceholder>
           <ItemIdString>CatalogMacroModelingItem?MarnaTeklaOS?GLOBAL</ItemIdString>
