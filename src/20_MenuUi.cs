@@ -126,7 +126,8 @@ internal static class MenuUi
             txtSelectionInput.Margin = new Padding(0, 0, 0, 8);
             txtSelectionInput.BackColor = C_CardFundo;
 
-            var btnSelectParts = CriarBotaoDashboard("Selecionar pecas", false);
+var btnSelectParts = CriarBotaoDashboard("Selecionar pecas", false);
+btnSelectParts.MinimumSize = new Size(200, 36);
             btnSelectParts.Click += delegate {
                 AssemblySelectionHelper.SelectAssemblies(txtSelectionInput.Text);
             };
@@ -175,15 +176,55 @@ internal static class MenuUi
             var grpActions = CriarGrupoDashboard("Acoes do modelo");
             var actionsLayout = CriarLayoutVertical();
 
-            var lblWarning = CriarLabelInfo("Use esta opcao caso o modelo apresente lentidao ou erros de numeracao.");
-            lblWarning.ForeColor = C_TextoSecundario;
-            lblWarning.Padding = new Padding(0, 0, 0, 4);
-
             var btnRepair = CriarBotaoDashboard("Diagnosticar e reparar modelo", true);
             btnRepair.Click += delegate { TeklaCommands.RunModelRepair(runtime); };
+            btnRepair.MinimumSize = new Size(200, 36);
 
-            AdicionarLinha(actionsLayout, lblWarning);
-            AdicionarLinha(actionsLayout, btnRepair);
+            var repairTooltip = new ToolTip();
+            repairTooltip.SetToolTip(btnRepair, "Use esta opcao caso o modelo apresente lentidao ou erros de numeracao.");
+
+            var repairActions = new FlowLayoutPanel();
+            repairActions.FlowDirection = FlowDirection.LeftToRight;
+            repairActions.AutoSize = true;
+            repairActions.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            repairActions.Dock = DockStyle.Top;
+            repairActions.Padding = new Padding(0);
+            repairActions.Margin = new Padding(0, 0, 0, 16);
+            repairActions.WrapContents = false;
+
+            var btnRepairHelp = new Button();
+            btnRepairHelp.Text = "[?]";
+            btnRepairHelp.Height = 36;
+            btnRepairHelp.Width = 36;
+            btnRepairHelp.FlatStyle = FlatStyle.Flat;
+            btnRepairHelp.FlatAppearance.BorderSize = 1;
+            btnRepairHelp.FlatAppearance.BorderColor = C_Borda;
+            btnRepairHelp.BackColor = C_CardFundo;
+            btnRepairHelp.ForeColor = C_DestaqueAzul;
+            btnRepairHelp.Font = F_Texto;
+            btnRepairHelp.Cursor = Cursors.Hand;
+            btnRepairHelp.Margin = new Padding(6, 0, 0, 0);
+            btnRepairHelp.Click += delegate {
+                MessageBox.Show(
+                    "Use esta opcao caso o modelo apresente lentidao ou erros de numeracao.",
+                    "Como usar",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information
+                );
+            };
+
+            repairActions.Controls.Add(btnRepair);
+            repairActions.Controls.Add(btnRepairHelp);
+
+            AdicionarLinha(actionsLayout, repairActions);
+
+            var btnCompare = CriarBotaoDashboard("Comparar conjuntos", false);
+            btnCompare.Click += delegate { AssemblyComparator.CompareSelectedAssemblies(); };
+
+            var compareTooltip = new ToolTip();
+            compareTooltip.SetToolTip(btnCompare, "Selecione exatamente dois conjuntos (ex: PP1 e PP2) e clique para comparar as pecas lado a lado.");
+
+            AdicionarLinha(actionsLayout, btnCompare);
             grpActions.Controls.Add(actionsLayout);
             AdicionarLinha(dashboardLayout, grpActions);
 

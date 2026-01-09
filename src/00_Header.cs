@@ -4,6 +4,8 @@
 #pragma warning restore 1633 // Unrecognized #pragma directive
 
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Text;
 using System.Windows.Forms;

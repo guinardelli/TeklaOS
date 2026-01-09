@@ -8,6 +8,8 @@
 #pragma warning restore 1633 // Unrecognized #pragma directive
 
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Text;
 using System.Windows.Forms;
@@ -156,7 +158,8 @@ internal static class MenuUi
             txtSelectionInput.Margin = new Padding(0, 0, 0, 8);
             txtSelectionInput.BackColor = C_CardFundo;
 
-            var btnSelectParts = CriarBotaoDashboard("Selecionar pecas", false);
+var btnSelectParts = CriarBotaoDashboard("Selecionar pecas", false);
+btnSelectParts.MinimumSize = new Size(200, 36);
             btnSelectParts.Click += delegate {
                 AssemblySelectionHelper.SelectAssemblies(txtSelectionInput.Text);
             };
@@ -205,15 +208,55 @@ internal static class MenuUi
             var grpActions = CriarGrupoDashboard("Acoes do modelo");
             var actionsLayout = CriarLayoutVertical();
 
-            var lblWarning = CriarLabelInfo("Use esta opcao caso o modelo apresente lentidao ou erros de numeracao.");
-            lblWarning.ForeColor = C_TextoSecundario;
-            lblWarning.Padding = new Padding(0, 0, 0, 4);
-
             var btnRepair = CriarBotaoDashboard("Diagnosticar e reparar modelo", true);
             btnRepair.Click += delegate { TeklaCommands.RunModelRepair(runtime); };
+            btnRepair.MinimumSize = new Size(200, 36);
 
-            AdicionarLinha(actionsLayout, lblWarning);
-            AdicionarLinha(actionsLayout, btnRepair);
+            var repairTooltip = new ToolTip();
+            repairTooltip.SetToolTip(btnRepair, "Use esta opcao caso o modelo apresente lentidao ou erros de numeracao.");
+
+            var repairActions = new FlowLayoutPanel();
+            repairActions.FlowDirection = FlowDirection.LeftToRight;
+            repairActions.AutoSize = true;
+            repairActions.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            repairActions.Dock = DockStyle.Top;
+            repairActions.Padding = new Padding(0);
+            repairActions.Margin = new Padding(0, 0, 0, 16);
+            repairActions.WrapContents = false;
+
+            var btnRepairHelp = new Button();
+            btnRepairHelp.Text = "[?]";
+            btnRepairHelp.Height = 36;
+            btnRepairHelp.Width = 36;
+            btnRepairHelp.FlatStyle = FlatStyle.Flat;
+            btnRepairHelp.FlatAppearance.BorderSize = 1;
+            btnRepairHelp.FlatAppearance.BorderColor = C_Borda;
+            btnRepairHelp.BackColor = C_CardFundo;
+            btnRepairHelp.ForeColor = C_DestaqueAzul;
+            btnRepairHelp.Font = F_Texto;
+            btnRepairHelp.Cursor = Cursors.Hand;
+            btnRepairHelp.Margin = new Padding(6, 0, 0, 0);
+            btnRepairHelp.Click += delegate {
+                MessageBox.Show(
+                    "Use esta opcao caso o modelo apresente lentidao ou erros de numeracao.",
+                    "Como usar",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information
+                );
+            };
+
+            repairActions.Controls.Add(btnRepair);
+            repairActions.Controls.Add(btnRepairHelp);
+
+            AdicionarLinha(actionsLayout, repairActions);
+
+            var btnCompare = CriarBotaoDashboard("Comparar conjuntos", false);
+            btnCompare.Click += delegate { AssemblyComparator.CompareSelectedAssemblies(); };
+
+            var compareTooltip = new ToolTip();
+            compareTooltip.SetToolTip(btnCompare, "Selecione exatamente dois conjuntos (ex: PP1 e PP2) e clique para comparar as pecas lado a lado.");
+
+            AdicionarLinha(actionsLayout, btnCompare);
             grpActions.Controls.Add(actionsLayout);
             AdicionarLinha(dashboardLayout, grpActions);
 
@@ -965,6 +1008,139 @@ internal static class AssemblySelectionHelper
         collection.Add(new BinaryFilterExpressionItem(stringFilter, BinaryFilterOperatorType.BOOLEAN_AND));
 
         return collection;
+    }
+}
+
+
+internal static class AssemblyComparator
+{
+    public static void CompareSelectedAssemblies()
+    {
+        Model model = new Model();
+        if (!model.GetConnectionStatus())
+        {
+            MessageBox.Show("Nao foi possivel conectar ao modelo Tekla. Abra um modelo e tente novamente.");
+            return;
+        }
+
+        ModelUI.ModelObjectSelector uiSelector = new ModelUI.ModelObjectSelector();
+        ModelObjectEnumerator enumSelected = uiSelector.GetSelectedObjects();
+        if (enumSelected == null)
+        {
+            MessageBox.Show("Nenhum objeto selecionado.");
+            return;
+        }
+
+        ArrayList assemblies = new ArrayList();
+        while (enumSelected.MoveNext())
+        {
+            Assembly ass = enumSelected.Current as Assembly;
+            if (ass != null)
+            {
+                assemblies.Add(ass);
+            }
+        }
+
+        if (assemblies.Count != 2)
+        {
+            MessageBox.Show("Selecione exatamente dois conjuntos para comparar.");
+            return;
+        }
+
+        Assembly ass1 = (Assembly)assemblies[0];
+        Assembly ass2 = (Assembly)assemblies[1];
+
+        StringBuilder sb = new StringBuilder();
+        sb.AppendLine("Comparacao de Conjuntos");
+        sb.AppendLine();
+
+        AppendAssemblyParts(sb, ass1, "Conjunto 1: " + Formatters.FormatValue(ass1.Name));
+        sb.AppendLine();
+
+        AppendAssemblyParts(sb, ass2, "Conjunto 2: " + Formatters.FormatValue(ass2.Name));
+
+        ReportWindow.ShowReport(sb.ToString());
+    }
+
+    private static void AppendAssemblyParts(StringBuilder sb, Assembly ass, string title)
+    {
+        sb.AppendLine(title);
+
+        ArrayList parts = new ArrayList();
+        Part mainPart = ass.GetMainPart() as Part;
+        if (mainPart != null)
+        {
+            parts.Add(mainPart);
+        }
+
+        ArrayList secondaryParts = ass.GetSecondaries();
+        foreach (ModelObject secondary in secondaryParts)
+        {
+            Part part = secondary as Part;
+            if (part != null)
+            {
+                parts.Add(part);
+            }
+        }
+
+        if (parts.Count == 0)
+        {
+            sb.AppendLine("Nenhuma peca encontrada.");
+            sb.AppendLine();
+            return;
+        }
+
+        sb.AppendLine("Posicao | Nome Pecas Principal | Perfil Pecas Principal | Pecas Principal Material | Largura | Altura | Comprimento | Volume | Peso | Local Nivel Sup | Local Nivel Inf | Global Nivel Sup | Global Nivel Inf");
+        sb.AppendLine("--------------------------------------------------------------------------------------------------------------------------------");
+
+        foreach (Part part in parts)
+        {
+            StringBuilder rowSb = new StringBuilder();
+            rowSb.Append(GetReportProperty(part, "POSITION"));
+            rowSb.Append(" | ");
+            rowSb.Append(GetReportProperty(part, "NAME"));
+            rowSb.Append(" | ");
+            rowSb.Append(GetReportProperty(part, "PROFILE"));
+            rowSb.Append(" | ");
+            rowSb.Append(GetReportProperty(part, "MATERIAL"));
+            rowSb.Append(" | ");
+            rowSb.Append(GetReportProperty(part, "WIDTH"));
+            rowSb.Append(" | ");
+            rowSb.Append(GetReportProperty(part, "HEIGHT"));
+            rowSb.Append(" | ");
+            rowSb.Append(GetReportProperty(part, "LENGTH"));
+            rowSb.Append(" | ");
+            rowSb.Append(GetReportProperty(part, "VOLUME"));
+            rowSb.Append(" | ");
+            rowSb.Append(GetReportProperty(part, "WEIGHT"));
+            rowSb.Append(" | ");
+            rowSb.Append(GetReportProperty(part, "Z_MAX_LOCAL"));
+            rowSb.Append(" | ");
+            rowSb.Append(GetReportProperty(part, "Z_MIN_LOCAL"));
+            rowSb.Append(" | ");
+            rowSb.Append(GetReportProperty(part, "Z_MAX_GLOBAL"));
+            rowSb.Append(" | ");
+            rowSb.Append(GetReportProperty(part, "Z_MIN_GLOBAL"));
+            sb.AppendLine(rowSb.ToString());
+        }
+        sb.AppendLine();
+    }
+
+    private static string GetReportProperty(Part part, string propertyName)
+    {
+        string stringValue = null;
+        if (part.GetReportProperty(propertyName, ref stringValue))
+        {
+            return Formatters.FormatValue(stringValue);
+        }
+
+        double doubleValue = 0.0;
+        if (part.GetReportProperty(propertyName, ref doubleValue))
+        {
+            return Formatters.FormatValue(string.Format("{0:F1}", doubleValue));
+        }
+
+        return "-";
     }
 }
 
