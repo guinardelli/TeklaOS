@@ -1,7 +1,6 @@
 # CODEX
 
-Este documento unifica o que esta em `instrucoes_programacao.md` e `CODEX_INSTRUCTIONS.md`,
-fornecendo ao Codex um unico ponto de referencia para desenvolver, gerar e distribuir macros
+Este documento fornece ao Codex um unico ponto de referencia para desenvolver, gerar e distribuir macros
 Tekla Structures 2023 neste repositorio.
 
 ## 1. Objetivo do projeto
