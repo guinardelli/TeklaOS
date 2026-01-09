@@ -11,7 +11,10 @@ using System;
 using System.Drawing;
 using System.Text;
 using System.Windows.Forms;
+using Tekla.Structures;
 using Tekla.Structures.Model;
+using Tekla.Structures.Filtering;
+using Tekla.Structures.Filtering.Categories;
 using ModelUI = Tekla.Structures.Model.UI;
 
 
@@ -67,7 +70,7 @@ internal static class MenuUi
             headerPanel.Dock = DockStyle.Top;
             headerPanel.Height = 80; // Mais alto para o Logo
             headerPanel.BackColor = C_Cabecalho;
-            headerPanel.Padding = new Padding(15);
+            headerPanel.Padding = new Padding(16);
             
             // Container para alinhar Logo + Texto
             var headerLayout = new TableLayoutPanel();
@@ -82,7 +85,7 @@ internal static class MenuUi
             var logoBox = new PictureBox();
             logoBox.SizeMode = PictureBoxSizeMode.Zoom;
             logoBox.Size = new Size(60, 50); // Tamanho do logo
-            logoBox.Margin = new Padding(0, 0, 15, 0); // Espaco a direita do logo
+            logoBox.Margin = new Padding(0, 0, 16, 0); // Espaco a direita do logo
             logoBox.BackColor = Color.Transparent;
             
             try {
@@ -122,7 +125,7 @@ internal static class MenuUi
             // 3. Container de Conteudo
             var contentPanel = new Panel();
             contentPanel.Dock = DockStyle.Fill;
-            contentPanel.Padding = new Padding(20);
+            contentPanel.Padding = new Padding(16);
             
             var flowLayout = new FlowLayoutPanel();
             flowLayout.Dock = DockStyle.Fill;
@@ -159,14 +162,14 @@ internal static class MenuUi
             lblSelectionInfo.ForeColor = C_TextoSecundario;
             lblSelectionInfo.Font = new Font("Segoe UI", 8F);
             lblSelectionInfo.Dock = DockStyle.Top;
-            lblSelectionInfo.Padding = new Padding(0, 0, 0, 5);
+            lblSelectionInfo.Padding = new Padding(0, 0, 0, 8);
             lblSelectionInfo.Height = 30;
 
             var txtSelectionInput = new TextBox();
             txtSelectionInput.Dock = DockStyle.Top;
             txtSelectionInput.Height = 30;
             txtSelectionInput.Font = new Font("Segoe UI", 9F);
-            txtSelectionInput.Margin = new Padding(0, 0, 0, 5);
+            txtSelectionInput.Margin = new Padding(0, 0, 0, 8);
 
             var btnSelectParts = CriarBotaoPro("Selecionar pecas", C_DestaqueAzul, false);
             btnSelectParts.Click += delegate {
@@ -189,7 +192,7 @@ internal static class MenuUi
             lblWarning.ForeColor = Color.Gray;
             lblWarning.Font = new Font("Segoe UI", 8F, FontStyle.Italic);
             lblWarning.Dock = DockStyle.Top;
-            lblWarning.Padding = new Padding(5, 0, 5, 10);
+            lblWarning.Padding = new Padding(5, 0, 5, 8);
             lblWarning.Height = 40;
 
             cardMaint.Controls.Add(lblWarning);
@@ -197,9 +200,9 @@ internal static class MenuUi
             cardMaint.Controls.Add(CriarDivisor());
 
             flowLayout.Controls.Add(cardReports);
-            flowLayout.Controls.Add(new Panel { Height = 15 });
+            flowLayout.Controls.Add(new Panel { Height = 16 });
             flowLayout.Controls.Add(cardSelection);
-            flowLayout.Controls.Add(new Panel { Height = 15 });
+            flowLayout.Controls.Add(new Panel { Height = 16 });
             flowLayout.Controls.Add(cardMaint);
             contentPanel.Controls.Add(flowLayout);
             AjustarLarguraCards(flowLayout);
@@ -207,9 +210,9 @@ internal static class MenuUi
             // 4. Rodape
             var footerPanel = new Panel();
             footerPanel.Dock = DockStyle.Bottom;
-            footerPanel.Height = 45;
+            footerPanel.Height = 48;
             footerPanel.BackColor = Color.White;
-            footerPanel.Padding = new Padding(15, 8, 15, 8);
+            footerPanel.Padding = new Padding(16, 8, 16, 8);
 
             var chkTransp = new CheckBox();
             chkTransp.Text = "Modo Transparente";
@@ -249,7 +252,7 @@ internal static class MenuUi
         card.BackColor = C_CardFundo;
         card.AutoSize = true;
         card.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-        card.Padding = new Padding(15);
+        card.Padding = new Padding(16);
         card.Margin = new Padding(0);
         card.Tag = "card";
         
@@ -263,7 +266,7 @@ internal static class MenuUi
         lblHeader.Font = new Font("Segoe UI", 8F, FontStyle.Bold);
         lblHeader.ForeColor = C_TextoSecundario;
         lblHeader.Dock = DockStyle.Top;
-        lblHeader.Padding = new Padding(0, 0, 0, 10);
+        lblHeader.Padding = new Padding(0, 0, 0, 8);
         lblHeader.Height = 25;
 
         card.Controls.Add(lblHeader);
@@ -289,7 +292,7 @@ internal static class MenuUi
     private static Button CriarBotaoPro(string texto, Color corDestaque, bool ehPerigo)
     {
         var btn = new Button();
-        btn.Text = "      " + texto;
+        btn.Text = texto;
         btn.Height = 40;
         btn.Dock = DockStyle.Top;
         btn.FlatStyle = FlatStyle.Flat;
@@ -297,7 +300,8 @@ internal static class MenuUi
         btn.Cursor = Cursors.Hand;
         btn.Font = new Font("Segoe UI", 10F, FontStyle.Regular);
         btn.TextAlign = ContentAlignment.MiddleLeft;
-        btn.Margin = new Padding(0, 0, 0, 5);
+        btn.Padding = new Padding(16, 0, 16, 0);
+        btn.Margin = new Padding(0, 0, 0, 8);
         btn.BackColor = ehPerigo ? C_FundoVermelhoSuave : Color.White;
         btn.ForeColor = ehPerigo ? C_DestaqueVermelho : C_TextoPrimario;
 
@@ -316,7 +320,7 @@ internal static class MenuUi
 
     private static Panel CriarDivisor()
     {
-        return new Panel { Height = 10, Dock = DockStyle.Top, BackColor = Color.Transparent };
+        return new Panel { Height = 8, Dock = DockStyle.Top, BackColor = Color.Transparent };
     }
 
     // --- ASSETS (Imagens em Base64) ---
@@ -648,43 +652,71 @@ internal static class AssemblySelectionHelper
             return;
         }
 
-        var enumerator = model.GetModelObjectSelector().GetAllObjectsWithType(ModelObject.ModelObjectEnum.ASSEMBLY);
-        if (enumerator == null)
-        {
-            MessageBox.Show("Nao foi possivel obter os conjuntos do modelo.");
-            return;
-        }
-
         var selection = new System.Collections.ArrayList();
+        var selectionIds = new System.Collections.Generic.HashSet<long>();
         var foundNames = new System.Collections.Generic.HashSet<string>(Comparer);
 
-        while (enumerator.MoveNext())
+        TrySelectAssembliesByFilters(model, requestedOrder, selection, selectionIds, foundNames);
+
+        var missingNormalized = new System.Collections.Generic.HashSet<string>(Comparer);
+        foreach (var normalized in requestedMapping.Keys)
         {
-            var assembly = enumerator.Current as Assembly;
-            if (assembly == null)
+            if (!foundNames.Contains(normalized))
             {
-                continue;
+                missingNormalized.Add(normalized);
+            }
+        }
+
+        if (missingNormalized.Count > 0)
+        {
+            var enumerator = model.GetModelObjectSelector().GetAllObjectsWithType(ModelObject.ModelObjectEnum.ASSEMBLY);
+            if (enumerator == null)
+            {
+                MessageBox.Show("Nao foi possivel obter os conjuntos do modelo.");
+                return;
             }
 
-            foreach (var candidate in GetNormalizedAssemblyKeys(assembly))
+            var previousCursor = Cursor.Current;
+            Cursor.Current = Cursors.WaitCursor;
+            try
             {
-                if (!requestedMapping.ContainsKey(candidate))
+                int processed = 0;
+                while (enumerator.MoveNext())
                 {
-                    continue;
-                }
+                    processed++;
+                    if (processed % 200 == 0)
+                    {
+                        Application.DoEvents();
+                    }
 
-                if (!selection.Contains(assembly))
-                {
-                    selection.Add(assembly);
-                }
+                    var assembly = enumerator.Current as Assembly;
+                    if (assembly == null)
+                    {
+                        continue;
+                    }
 
-                foundNames.Add(candidate);
-                break;
+                    foreach (var candidate in GetNormalizedAssemblyKeys(assembly))
+                    {
+                        if (!missingNormalized.Contains(candidate))
+                        {
+                            continue;
+                        }
+
+                        AddAssemblyToSelection(selection, selectionIds, assembly);
+                        foundNames.Add(candidate);
+                        missingNormalized.Remove(candidate);
+                        break;
+                    }
+
+                    if (missingNormalized.Count == 0)
+                    {
+                        break;
+                    }
+                }
             }
-
-            if (foundNames.Count == requestedMapping.Count)
+            finally
             {
-                break;
+                Cursor.Current = previousCursor;
             }
         }
 
@@ -764,55 +796,14 @@ internal static class AssemblySelectionHelper
 
     private static System.Collections.Generic.IEnumerable<string> TryGetReportValues(Assembly assembly)
     {
-        var values = new System.Collections.Generic.List<string>();
-
         foreach (var propertyName in new[] { "POSITION", "ASSEMBLY_POSITION", "ASSEMBLY_POS", "POSITION_NAME", "ASSEMBLY_NUMBER", "POSITION_ID" })
         {
             var reportValue = TryGetReportProperty(assembly, propertyName);
             if (!string.IsNullOrWhiteSpace(reportValue))
             {
-                values.Add(reportValue);
+                yield return reportValue;
             }
         }
-
-        try
-        {
-            var names = new System.Collections.ArrayList();
-            var types = new System.Collections.ArrayList();
-            var rawValues = new System.Collections.ArrayList();
-            var props = new System.Collections.Hashtable();
-
-            if (assembly.GetAllReportProperties(names, types, rawValues, ref props))
-            {
-                foreach (System.Collections.DictionaryEntry entry in props)
-                {
-                    string key = entry.Key as string;
-                    if (key == null)
-                    {
-                        continue;
-                    }
-
-                    if (key.IndexOf("POSITION", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                        key.IndexOf("ASSEMBLY_POS", StringComparison.OrdinalIgnoreCase) >= 0)
-                    {
-                        if (entry.Value != null)
-                        {
-                            var text = entry.Value.ToString();
-                            if (!string.IsNullOrWhiteSpace(text))
-                            {
-                                values.Add(text);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        catch
-        {
-            // Ignore missing report properties.
-        }
-
-        return values;
     }
 
     private static string TryGetReportProperty(Assembly assembly, string propertyName)
@@ -854,6 +845,132 @@ internal static class AssemblySelectionHelper
 
         var trimmed = input.Trim();
         return trimmed.Length == 0 ? null : trimmed;
+    }
+
+    private static readonly Func<string, BinaryFilterExpressionCollection>[] AssemblyFilterFactories =
+        new Func<string, BinaryFilterExpressionCollection>[]
+        {
+            value => BuildAssemblyStringFilter(() => new AssemblyFilterExpressions.Name(), value),
+            value => BuildAssemblyStringFilter(() => new AssemblyFilterExpressions.PositionNumber(), value)
+        };
+
+    private static void TrySelectAssembliesByFilters(Model model, System.Collections.Generic.IEnumerable<string> normalizedKeys, System.Collections.ArrayList selection, System.Collections.Generic.HashSet<long> selectionIds, System.Collections.Generic.HashSet<string> foundNames)
+    {
+        if (model == null || normalizedKeys == null)
+        {
+            return;
+        }
+
+        var selector = model.GetModelObjectSelector();
+        if (selector == null)
+        {
+            return;
+        }
+
+        foreach (var normalized in normalizedKeys)
+        {
+            if (string.IsNullOrWhiteSpace(normalized) || foundNames.Contains(normalized))
+            {
+                continue;
+            }
+
+            if (TryGatherAssembliesByFilter(selector, normalized, selection, selectionIds))
+            {
+                foundNames.Add(normalized);
+            }
+        }
+    }
+
+    private static bool TryGatherAssembliesByFilter(ModelObjectSelector selector, string normalized, System.Collections.ArrayList selection, System.Collections.Generic.HashSet<long> selectionIds)
+    {
+        foreach (var factory in AssemblyFilterFactories)
+        {
+            var filter = factory(normalized);
+            if (filter == null)
+            {
+                continue;
+            }
+
+            var enumerator = selector.GetObjectsByFilter(filter);
+            if (enumerator == null)
+            {
+                continue;
+            }
+
+            var found = false;
+            while (enumerator.MoveNext())
+            {
+                var assembly = enumerator.Current as Assembly;
+                if (assembly == null)
+                {
+                    continue;
+                }
+
+                AddAssemblyToSelection(selection, selectionIds, assembly);
+                found = true;
+            }
+
+            if (found)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static void AddAssemblyToSelection(System.Collections.ArrayList selection, System.Collections.Generic.HashSet<long> selectionIds, Assembly assembly)
+    {
+        if (assembly == null)
+        {
+            return;
+        }
+
+        var identifier = assembly.Identifier;
+        if (identifier != null && identifier.ID != 0)
+        {
+            if (selectionIds.Add(identifier.ID))
+            {
+                selection.Add(assembly);
+            }
+
+            return;
+        }
+
+        if (!selection.Contains(assembly))
+        {
+            selection.Add(assembly);
+        }
+    }
+
+    private static BinaryFilterExpressionCollection BuildAssemblyStringFilter(Func<StringFilterExpression> propertyFactory, string normalized)
+    {
+        if (propertyFactory == null || string.IsNullOrWhiteSpace(normalized))
+        {
+            return null;
+        }
+
+        var propertyExpression = propertyFactory();
+        if (propertyExpression == null)
+        {
+            return null;
+        }
+
+        var collection = new BinaryFilterExpressionCollection();
+
+        var typeFilter = new BinaryFilterExpression(
+            new ObjectFilterExpressions.Type(),
+            NumericOperatorType.IS_EQUAL,
+            new NumericConstantFilterExpression((int)TeklaStructuresDatabaseTypeEnum.ASSEMBLY));
+        collection.Add(new BinaryFilterExpressionItem(typeFilter, BinaryFilterOperatorType.BOOLEAN_AND));
+
+        var stringFilter = new BinaryFilterExpression(
+            propertyExpression,
+            StringOperatorType.IS_EQUAL,
+            new StringConstantFilterExpression(normalized));
+        collection.Add(new BinaryFilterExpressionItem(stringFilter, BinaryFilterOperatorType.BOOLEAN_AND));
+
+        return collection;
     }
 }
 

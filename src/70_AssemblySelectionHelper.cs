@@ -40,43 +40,71 @@ internal static class AssemblySelectionHelper
             return;
         }
 
-        var enumerator = model.GetModelObjectSelector().GetAllObjectsWithType(ModelObject.ModelObjectEnum.ASSEMBLY);
-        if (enumerator == null)
-        {
-            MessageBox.Show("Nao foi possivel obter os conjuntos do modelo.");
-            return;
-        }
-
         var selection = new System.Collections.ArrayList();
+        var selectionIds = new System.Collections.Generic.HashSet<long>();
         var foundNames = new System.Collections.Generic.HashSet<string>(Comparer);
 
-        while (enumerator.MoveNext())
+        TrySelectAssembliesByFilters(model, requestedOrder, selection, selectionIds, foundNames);
+
+        var missingNormalized = new System.Collections.Generic.HashSet<string>(Comparer);
+        foreach (var normalized in requestedMapping.Keys)
         {
-            var assembly = enumerator.Current as Assembly;
-            if (assembly == null)
+            if (!foundNames.Contains(normalized))
             {
-                continue;
+                missingNormalized.Add(normalized);
+            }
+        }
+
+        if (missingNormalized.Count > 0)
+        {
+            var enumerator = model.GetModelObjectSelector().GetAllObjectsWithType(ModelObject.ModelObjectEnum.ASSEMBLY);
+            if (enumerator == null)
+            {
+                MessageBox.Show("Nao foi possivel obter os conjuntos do modelo.");
+                return;
             }
 
-            foreach (var candidate in GetNormalizedAssemblyKeys(assembly))
+            var previousCursor = Cursor.Current;
+            Cursor.Current = Cursors.WaitCursor;
+            try
             {
-                if (!requestedMapping.ContainsKey(candidate))
+                int processed = 0;
+                while (enumerator.MoveNext())
                 {
-                    continue;
-                }
+                    processed++;
+                    if (processed % 200 == 0)
+                    {
+                        Application.DoEvents();
+                    }
 
-                if (!selection.Contains(assembly))
-                {
-                    selection.Add(assembly);
-                }
+                    var assembly = enumerator.Current as Assembly;
+                    if (assembly == null)
+                    {
+                        continue;
+                    }
 
-                foundNames.Add(candidate);
-                break;
+                    foreach (var candidate in GetNormalizedAssemblyKeys(assembly))
+                    {
+                        if (!missingNormalized.Contains(candidate))
+                        {
+                            continue;
+                        }
+
+                        AddAssemblyToSelection(selection, selectionIds, assembly);
+                        foundNames.Add(candidate);
+                        missingNormalized.Remove(candidate);
+                        break;
+                    }
+
+                    if (missingNormalized.Count == 0)
+                    {
+                        break;
+                    }
+                }
             }
-
-            if (foundNames.Count == requestedMapping.Count)
+            finally
             {
-                break;
+                Cursor.Current = previousCursor;
             }
         }
 
@@ -156,55 +184,14 @@ internal static class AssemblySelectionHelper
 
     private static System.Collections.Generic.IEnumerable<string> TryGetReportValues(Assembly assembly)
     {
-        var values = new System.Collections.Generic.List<string>();
-
         foreach (var propertyName in new[] { "POSITION", "ASSEMBLY_POSITION", "ASSEMBLY_POS", "POSITION_NAME", "ASSEMBLY_NUMBER", "POSITION_ID" })
         {
             var reportValue = TryGetReportProperty(assembly, propertyName);
             if (!string.IsNullOrWhiteSpace(reportValue))
             {
-                values.Add(reportValue);
+                yield return reportValue;
             }
         }
-
-        try
-        {
-            var names = new System.Collections.ArrayList();
-            var types = new System.Collections.ArrayList();
-            var rawValues = new System.Collections.ArrayList();
-            var props = new System.Collections.Hashtable();
-
-            if (assembly.GetAllReportProperties(names, types, rawValues, ref props))
-            {
-                foreach (System.Collections.DictionaryEntry entry in props)
-                {
-                    string key = entry.Key as string;
-                    if (key == null)
-                    {
-                        continue;
-                    }
-
-                    if (key.IndexOf("POSITION", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                        key.IndexOf("ASSEMBLY_POS", StringComparison.OrdinalIgnoreCase) >= 0)
-                    {
-                        if (entry.Value != null)
-                        {
-                            var text = entry.Value.ToString();
-                            if (!string.IsNullOrWhiteSpace(text))
-                            {
-                                values.Add(text);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        catch
-        {
-            // Ignore missing report properties.
-        }
-
-        return values;
     }
 
     private static string TryGetReportProperty(Assembly assembly, string propertyName)
@@ -246,5 +233,131 @@ internal static class AssemblySelectionHelper
 
         var trimmed = input.Trim();
         return trimmed.Length == 0 ? null : trimmed;
+    }
+
+    private static readonly Func<string, BinaryFilterExpressionCollection>[] AssemblyFilterFactories =
+        new Func<string, BinaryFilterExpressionCollection>[]
+        {
+            value => BuildAssemblyStringFilter(() => new AssemblyFilterExpressions.Name(), value),
+            value => BuildAssemblyStringFilter(() => new AssemblyFilterExpressions.PositionNumber(), value)
+        };
+
+    private static void TrySelectAssembliesByFilters(Model model, System.Collections.Generic.IEnumerable<string> normalizedKeys, System.Collections.ArrayList selection, System.Collections.Generic.HashSet<long> selectionIds, System.Collections.Generic.HashSet<string> foundNames)
+    {
+        if (model == null || normalizedKeys == null)
+        {
+            return;
+        }
+
+        var selector = model.GetModelObjectSelector();
+        if (selector == null)
+        {
+            return;
+        }
+
+        foreach (var normalized in normalizedKeys)
+        {
+            if (string.IsNullOrWhiteSpace(normalized) || foundNames.Contains(normalized))
+            {
+                continue;
+            }
+
+            if (TryGatherAssembliesByFilter(selector, normalized, selection, selectionIds))
+            {
+                foundNames.Add(normalized);
+            }
+        }
+    }
+
+    private static bool TryGatherAssembliesByFilter(ModelObjectSelector selector, string normalized, System.Collections.ArrayList selection, System.Collections.Generic.HashSet<long> selectionIds)
+    {
+        foreach (var factory in AssemblyFilterFactories)
+        {
+            var filter = factory(normalized);
+            if (filter == null)
+            {
+                continue;
+            }
+
+            var enumerator = selector.GetObjectsByFilter(filter);
+            if (enumerator == null)
+            {
+                continue;
+            }
+
+            var found = false;
+            while (enumerator.MoveNext())
+            {
+                var assembly = enumerator.Current as Assembly;
+                if (assembly == null)
+                {
+                    continue;
+                }
+
+                AddAssemblyToSelection(selection, selectionIds, assembly);
+                found = true;
+            }
+
+            if (found)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static void AddAssemblyToSelection(System.Collections.ArrayList selection, System.Collections.Generic.HashSet<long> selectionIds, Assembly assembly)
+    {
+        if (assembly == null)
+        {
+            return;
+        }
+
+        var identifier = assembly.Identifier;
+        if (identifier != null && identifier.ID != 0)
+        {
+            if (selectionIds.Add(identifier.ID))
+            {
+                selection.Add(assembly);
+            }
+
+            return;
+        }
+
+        if (!selection.Contains(assembly))
+        {
+            selection.Add(assembly);
+        }
+    }
+
+    private static BinaryFilterExpressionCollection BuildAssemblyStringFilter(Func<StringFilterExpression> propertyFactory, string normalized)
+    {
+        if (propertyFactory == null || string.IsNullOrWhiteSpace(normalized))
+        {
+            return null;
+        }
+
+        var propertyExpression = propertyFactory();
+        if (propertyExpression == null)
+        {
+            return null;
+        }
+
+        var collection = new BinaryFilterExpressionCollection();
+
+        var typeFilter = new BinaryFilterExpression(
+            new ObjectFilterExpressions.Type(),
+            NumericOperatorType.IS_EQUAL,
+            new NumericConstantFilterExpression((int)TeklaStructuresDatabaseTypeEnum.ASSEMBLY));
+        collection.Add(new BinaryFilterExpressionItem(typeFilter, BinaryFilterOperatorType.BOOLEAN_AND));
+
+        var stringFilter = new BinaryFilterExpression(
+            propertyExpression,
+            StringOperatorType.IS_EQUAL,
+            new StringConstantFilterExpression(normalized));
+        collection.Add(new BinaryFilterExpressionItem(stringFilter, BinaryFilterOperatorType.BOOLEAN_AND));
+
+        return collection;
     }
 }

@@ -7,5 +7,8 @@ using System;
 using System.Drawing;
 using System.Text;
 using System.Windows.Forms;
+using Tekla.Structures;
 using Tekla.Structures.Model;
+using Tekla.Structures.Filtering;
+using Tekla.Structures.Filtering.Categories;
 using ModelUI = Tekla.Structures.Model.UI;

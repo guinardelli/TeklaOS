@@ -40,7 +40,7 @@ internal static class MenuUi
             headerPanel.Dock = DockStyle.Top;
             headerPanel.Height = 80; // Mais alto para o Logo
             headerPanel.BackColor = C_Cabecalho;
-            headerPanel.Padding = new Padding(15);
+            headerPanel.Padding = new Padding(16);
             
             // Container para alinhar Logo + Texto
             var headerLayout = new TableLayoutPanel();
@@ -55,7 +55,7 @@ internal static class MenuUi
             var logoBox = new PictureBox();
             logoBox.SizeMode = PictureBoxSizeMode.Zoom;
             logoBox.Size = new Size(60, 50); // Tamanho do logo
-            logoBox.Margin = new Padding(0, 0, 15, 0); // Espaco a direita do logo
+            logoBox.Margin = new Padding(0, 0, 16, 0); // Espaco a direita do logo
             logoBox.BackColor = Color.Transparent;
             
             try {
@@ -95,7 +95,7 @@ internal static class MenuUi
             // 3. Container de Conteudo
             var contentPanel = new Panel();
             contentPanel.Dock = DockStyle.Fill;
-            contentPanel.Padding = new Padding(20);
+            contentPanel.Padding = new Padding(16);
             
             var flowLayout = new FlowLayoutPanel();
             flowLayout.Dock = DockStyle.Fill;
@@ -132,14 +132,14 @@ internal static class MenuUi
             lblSelectionInfo.ForeColor = C_TextoSecundario;
             lblSelectionInfo.Font = new Font("Segoe UI", 8F);
             lblSelectionInfo.Dock = DockStyle.Top;
-            lblSelectionInfo.Padding = new Padding(0, 0, 0, 5);
+            lblSelectionInfo.Padding = new Padding(0, 0, 0, 8);
             lblSelectionInfo.Height = 30;
 
             var txtSelectionInput = new TextBox();
             txtSelectionInput.Dock = DockStyle.Top;
             txtSelectionInput.Height = 30;
             txtSelectionInput.Font = new Font("Segoe UI", 9F);
-            txtSelectionInput.Margin = new Padding(0, 0, 0, 5);
+            txtSelectionInput.Margin = new Padding(0, 0, 0, 8);
 
             var btnSelectParts = CriarBotaoPro("Selecionar pecas", C_DestaqueAzul, false);
             btnSelectParts.Click += delegate {
@@ -162,7 +162,7 @@ internal static class MenuUi
             lblWarning.ForeColor = Color.Gray;
             lblWarning.Font = new Font("Segoe UI", 8F, FontStyle.Italic);
             lblWarning.Dock = DockStyle.Top;
-            lblWarning.Padding = new Padding(5, 0, 5, 10);
+            lblWarning.Padding = new Padding(5, 0, 5, 8);
             lblWarning.Height = 40;
 
             cardMaint.Controls.Add(lblWarning);
@@ -170,9 +170,9 @@ internal static class MenuUi
             cardMaint.Controls.Add(CriarDivisor());
 
             flowLayout.Controls.Add(cardReports);
-            flowLayout.Controls.Add(new Panel { Height = 15 });
+            flowLayout.Controls.Add(new Panel { Height = 16 });
             flowLayout.Controls.Add(cardSelection);
-            flowLayout.Controls.Add(new Panel { Height = 15 });
+            flowLayout.Controls.Add(new Panel { Height = 16 });
             flowLayout.Controls.Add(cardMaint);
             contentPanel.Controls.Add(flowLayout);
             AjustarLarguraCards(flowLayout);
@@ -180,9 +180,9 @@ internal static class MenuUi
             // 4. Rodape
             var footerPanel = new Panel();
             footerPanel.Dock = DockStyle.Bottom;
-            footerPanel.Height = 45;
+            footerPanel.Height = 48;
             footerPanel.BackColor = Color.White;
-            footerPanel.Padding = new Padding(15, 8, 15, 8);
+            footerPanel.Padding = new Padding(16, 8, 16, 8);
 
             var chkTransp = new CheckBox();
             chkTransp.Text = "Modo Transparente";
@@ -222,7 +222,7 @@ internal static class MenuUi
         card.BackColor = C_CardFundo;
         card.AutoSize = true;
         card.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-        card.Padding = new Padding(15);
+        card.Padding = new Padding(16);
         card.Margin = new Padding(0);
         card.Tag = "card";
         
@@ -236,7 +236,7 @@ internal static class MenuUi
         lblHeader.Font = new Font("Segoe UI", 8F, FontStyle.Bold);
         lblHeader.ForeColor = C_TextoSecundario;
         lblHeader.Dock = DockStyle.Top;
-        lblHeader.Padding = new Padding(0, 0, 0, 10);
+        lblHeader.Padding = new Padding(0, 0, 0, 8);
         lblHeader.Height = 25;
 
         card.Controls.Add(lblHeader);
@@ -262,7 +262,7 @@ internal static class MenuUi
     private static Button CriarBotaoPro(string texto, Color corDestaque, bool ehPerigo)
     {
         var btn = new Button();
-        btn.Text = "      " + texto;
+        btn.Text = texto;
         btn.Height = 40;
         btn.Dock = DockStyle.Top;
         btn.FlatStyle = FlatStyle.Flat;
@@ -270,7 +270,8 @@ internal static class MenuUi
         btn.Cursor = Cursors.Hand;
         btn.Font = new Font("Segoe UI", 10F, FontStyle.Regular);
         btn.TextAlign = ContentAlignment.MiddleLeft;
-        btn.Margin = new Padding(0, 0, 0, 5);
+        btn.Padding = new Padding(16, 0, 16, 0);
+        btn.Margin = new Padding(0, 0, 0, 8);
         btn.BackColor = ehPerigo ? C_FundoVermelhoSuave : Color.White;
         btn.ForeColor = ehPerigo ? C_DestaqueVermelho : C_TextoPrimario;
 
@@ -289,7 +290,7 @@ internal static class MenuUi
 
     private static Panel CriarDivisor()
     {
-        return new Panel { Height = 10, Dock = DockStyle.Top, BackColor = Color.Transparent };
+        return new Panel { Height = 8, Dock = DockStyle.Top, BackColor = Color.Transparent };
     }
 
     // --- ASSETS (Imagens em Base64) ---
