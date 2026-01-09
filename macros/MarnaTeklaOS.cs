@@ -1175,6 +1175,10 @@ internal static class AssemblyComparator
         sb.AppendLine(string.Format("Somente no conjunto 2: {0}", only2));
         sb.AppendLine();
 
+        sb.AppendLine("PROPRIEDADES DO CONJUNTO:");
+        AppendAssemblyPropertiesComparison(sb, ass1, ass2);
+        sb.AppendLine();
+
         sb.AppendLine("RESULTADO COMPARADOR:");
 
         if (details.Length == 0)
@@ -1308,6 +1312,46 @@ internal static class AssemblyComparator
         return string.Format("{0} pecas", count);
     }
 
+    private static void AppendAssemblyPropertiesComparison(StringBuilder sb, Assembly ass1, Assembly ass2)
+    {
+        AppendAssemblyPropertyLine(sb, ass1, ass2, "AREA");
+        AppendAssemblyPropertyLine(sb, ass1, ass2, "ASSEMBLY_PREFIX");
+        AppendAssemblyPropertyLine(sb, ass1, ass2, "WIDTH");
+        AppendAssemblyPropertyLine(sb, ass1, ass2, "HEIGHT");
+        AppendAssemblyPropertyLine(sb, ass1, ass2, "LENGHT");
+        AppendAssemblyPropertyLine(sb, ass1, ass2, "LENGHT_GROSS");
+        AppendAssemblyPropertyLine(sb, ass1, ass2, "MATERIAL_TYPE");
+        AppendAssemblyPropertyLine(sb, ass1, ass2, "VOLUME");
+        AppendAssemblyPropertyLine(sb, ass1, ass2, "WEIGHT");
+        AppendAssemblyPropertyLine(sb, ass1, ass2, "WEIGHT_GROSS");
+        AppendAssemblyPropertyLine(sb, ass1, ass2, "WEIGHT_NET");
+    }
+
+    private static void AppendAssemblyPropertyLine(StringBuilder sb, Assembly ass1, Assembly ass2, string propertyName)
+    {
+        string leftValue = GetAssemblyProperty(ass1, propertyName);
+        string rightValue = GetAssemblyProperty(ass2, propertyName);
+        AppendCompareLine(sb, propertyName, leftValue, rightValue);
+    }
+
+    private static string GetAssemblyProperty(Assembly ass, string propertyName)
+    {
+        string value = GetReportProperty(ass, propertyName);
+        if (value == "-")
+        {
+            if (string.Equals(propertyName, "LENGHT", StringComparison.OrdinalIgnoreCase))
+            {
+                value = GetReportProperty(ass, "LENGTH");
+            }
+            else if (string.Equals(propertyName, "LENGHT_GROSS", StringComparison.OrdinalIgnoreCase))
+            {
+                value = GetReportProperty(ass, "LENGTH_GROSS");
+            }
+        }
+
+        return value;
+    }
+
     private static string GetConjuntoLabel(string castUnitPos, string positionKey)
     {
         if (castUnitPos == "-" && !string.IsNullOrWhiteSpace(positionKey))
@@ -1345,16 +1389,21 @@ internal static class AssemblyComparator
         return string.Equals(left.Trim(), right.Trim(), StringComparison.OrdinalIgnoreCase);
     }
 
-    private static string GetReportProperty(Part part, string propertyName)
+    private static string GetReportProperty(ModelObject obj, string propertyName)
     {
+        if (obj == null)
+        {
+            return "-";
+        }
+
         string stringValue = null;
-        if (part.GetReportProperty(propertyName, ref stringValue))
+        if (obj.GetReportProperty(propertyName, ref stringValue))
         {
             return Formatters.FormatValue(stringValue);
         }
 
         double doubleValue = 0.0;
-        if (part.GetReportProperty(propertyName, ref doubleValue))
+        if (obj.GetReportProperty(propertyName, ref doubleValue))
         {
             return Formatters.FormatValue(string.Format("{0:F1}", doubleValue));
         }
