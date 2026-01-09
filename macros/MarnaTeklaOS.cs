@@ -1096,7 +1096,15 @@ internal static class AssemblyComparator
             {
                 only2++;
                 diff++;
-                details.AppendLine(string.Format("{0} | Somente conjunto 2 | - | - | - | - | - | - | - | -", pos));
+                Part onlyPart2 = PickRepresentative(list2);
+                string conjuntoRight = GetConjuntoLabel(GetPartPropertyOrDash(onlyPart2, "CAST_UNIT_POS"), pos);
+                details.AppendLine(string.Format("[X] Conjunto: - | {0}", conjuntoRight));
+                details.AppendLine("- Status: Somente conjunto 2");
+                AppendCompareLine(details, "Quantidade", 0, list2.Count);
+                AppendCompareLine(details, "Nome", "-", GetPartPropertyOrDash(onlyPart2, "NAME"));
+                AppendCompareLine(details, "Perfil", "-", GetPartPropertyOrDash(onlyPart2, "PROFILE"));
+                AppendCompareLine(details, "Material", "-", GetPartPropertyOrDash(onlyPart2, "MATERIAL"));
+                details.AppendLine();
                 continue;
             }
 
@@ -1104,7 +1112,15 @@ internal static class AssemblyComparator
             {
                 only1++;
                 diff++;
-                details.AppendLine(string.Format("{0} | Somente conjunto 1 | - | - | - | - | - | - | - | -", pos));
+                Part onlyPart1 = PickRepresentative(list1);
+                string conjuntoLeft = GetConjuntoLabel(GetPartPropertyOrDash(onlyPart1, "CAST_UNIT_POS"), pos);
+                details.AppendLine(string.Format("[X] Conjunto: {0} | -", conjuntoLeft));
+                details.AppendLine("- Status: Somente conjunto 1");
+                AppendCompareLine(details, "Quantidade", list1.Count, 0);
+                AppendCompareLine(details, "Nome", GetPartPropertyOrDash(onlyPart1, "NAME"), "-");
+                AppendCompareLine(details, "Perfil", GetPartPropertyOrDash(onlyPart1, "PROFILE"), "-");
+                AppendCompareLine(details, "Material", GetPartPropertyOrDash(onlyPart1, "MATERIAL"), "-");
+                details.AppendLine();
                 continue;
             }
 
@@ -1121,32 +1137,28 @@ internal static class AssemblyComparator
             string profile2 = GetReportProperty(part2, "PROFILE");
             string material1 = GetReportProperty(part1, "MATERIAL");
             string material2 = GetReportProperty(part2, "MATERIAL");
-            string length1 = GetReportProperty(part1, "LENGTH");
-            string length2 = GetReportProperty(part2, "LENGTH");
+            string castUnit1 = GetReportProperty(part1, "CAST_UNIT_POS");
+            string castUnit2 = GetReportProperty(part2, "CAST_UNIT_POS");
 
             bool propDiff = !AreEqualNormalized(name1, name2)
                 || !AreEqualNormalized(profile1, profile2)
                 || !AreEqualNormalized(material1, material2)
-                || !AreEqualNormalized(length1, length2);
+                || !AreEqualNormalized(castUnit1, castUnit2);
 
             if (countMismatch || propDiff)
             {
                 diff++;
-                string status = countMismatch
-                    ? string.Format("Qtd difere (C1={0}, C2={1})", count1, count2)
-                    : "Diferente";
-                details.AppendLine(string.Format(
-                    "{0} | {1} | {2} | {3} | {4} | {5} | {6} | {7} | {8} | {9}",
-                    pos,
-                    status,
-                    name1,
-                    name2,
-                    profile1,
-                    profile2,
-                    material1,
-                    material2,
-                    length1,
-                    length2));
+                string status = countMismatch ? "Quantidade diferente" : "Diferente";
+                string conjuntoLeft = GetConjuntoLabel(castUnit1, pos);
+                string conjuntoRight = GetConjuntoLabel(castUnit2, pos);
+                string conjuntoMark = AreEqualNormalized(conjuntoLeft, conjuntoRight) ? "[OK]" : "[X]";
+                details.AppendLine(string.Format("{0} Conjunto: {1} | {2}", conjuntoMark, conjuntoLeft, conjuntoRight));
+                details.AppendLine("- Status: " + status);
+                AppendCompareLine(details, "Quantidade", count1, count2);
+                AppendCompareLine(details, "Nome", name1, name2);
+                AppendCompareLine(details, "Perfil", profile1, profile2);
+                AppendCompareLine(details, "Material", material1, material2);
+                details.AppendLine();
             }
             else
             {
@@ -1163,9 +1175,7 @@ internal static class AssemblyComparator
         sb.AppendLine(string.Format("Somente no conjunto 2: {0}", only2));
         sb.AppendLine();
 
-        sb.AppendLine("Diferencas por posicao");
-        sb.AppendLine("Posicao | Status | Nome C1 | Nome C2 | Perfil C1 | Perfil C2 | Material C1 | Material C2 | Comprimento C1 | Comprimento C2");
-        sb.AppendLine("----------------------------------------------------------------------------------------------------------------------------");
+        sb.AppendLine("RESULTADO COMPARADOR:");
 
         if (details.Length == 0)
         {
@@ -1226,18 +1236,25 @@ internal static class AssemblyComparator
     private static string GetPositionKey(Part part)
     {
         string position = GetReportProperty(part, "POSITION");
-        if (position == null)
+        if (string.IsNullOrWhiteSpace(position) || position == "-")
         {
-            position = string.Empty;
+            string name = NormalizeKeyValue(GetReportProperty(part, "NAME"));
+            string profile = NormalizeKeyValue(GetReportProperty(part, "PROFILE"));
+            string material = NormalizeKeyValue(GetReportProperty(part, "MATERIAL"));
+            return string.Format("SEM_POSICAO_{0}_{1}_{2}", name, profile, material);
         }
 
-        position = position.Trim();
-        if (position.Length == 0 || position == "-")
+        return position.Trim();
+    }
+
+    private static string NormalizeKeyValue(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value) || value == "-")
         {
-            position = string.Format("SEM_POSICAO_{0}", part.Identifier.ID);
+            return "N/A";
         }
 
-        return position;
+        return value.Trim().ToUpperInvariant().Replace(" ", "_");
     }
 
     private static Part PickRepresentative(ArrayList parts)
@@ -1265,6 +1282,53 @@ internal static class AssemblyComparator
         }
 
         return selected;
+    }
+
+    private static void AppendCompareLine(StringBuilder sb, string label, string leftValue, string rightValue)
+    {
+        string mark = AreEqualNormalized(leftValue, rightValue) ? "[OK]" : "[X]";
+        sb.AppendLine(string.Format("{0} {1}: {2} | {3}", mark, label, leftValue, rightValue));
+    }
+
+    private static void AppendCompareLine(StringBuilder sb, string label, int leftCount, int rightCount)
+    {
+        string leftText = FormatQuantity(leftCount);
+        string rightText = FormatQuantity(rightCount);
+        string mark = leftCount == rightCount ? "[OK]" : "[X]";
+        sb.AppendLine(string.Format("{0} {1}: {2} | {3}", mark, label, leftText, rightText));
+    }
+
+    private static string FormatQuantity(int count)
+    {
+        if (count == 1)
+        {
+            return "1 peca";
+        }
+
+        return string.Format("{0} pecas", count);
+    }
+
+    private static string GetConjuntoLabel(string castUnitPos, string positionKey)
+    {
+        if (castUnitPos == "-" && !string.IsNullOrWhiteSpace(positionKey))
+        {
+            if (!positionKey.StartsWith("SEM_POSICAO_", StringComparison.OrdinalIgnoreCase))
+            {
+                return positionKey.Trim();
+            }
+        }
+
+        return castUnitPos;
+    }
+
+    private static string GetPartPropertyOrDash(Part part, string propertyName)
+    {
+        if (part == null)
+        {
+            return "-";
+        }
+
+        return GetReportProperty(part, propertyName);
     }
 
     private static bool AreEqualNormalized(string left, string right)

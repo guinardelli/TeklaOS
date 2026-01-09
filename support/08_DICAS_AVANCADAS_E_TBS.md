@@ -13,3 +13,4 @@ Aprendizados recentes (AssemblyComparator / Tekla 2023)
 - `GetMainPart()` retorna `ModelObject`. Use `Part mainPart = ass.GetMainPart() as Part;`.
 - `GetSecondaries()` retorna `ArrayList`. Percorra com `foreach (ModelObject obj in list)` e faca cast para `Part`.
 - Se aparecer CS0266/CS0029, revise tipos de retorno e use cast explicito.
+- Em blocos encadeados, evite redeclarar `part1`/`part2` (ou qualquer nome) em escopos filhos para nao gerar CS0136; use identificadores diferentes quando precisar de variaveis temporarias.
