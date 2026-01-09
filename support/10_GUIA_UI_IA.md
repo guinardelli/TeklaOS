@@ -109,3 +109,13 @@ Antes de gerar o código final, verifique:
 [ ] A lógica de negócio (Tekla API) está separada da lógica de UI (Evento Click)?
 
 [ ] O layout é fluido (Dock / Flow) ou vai quebrar se o usuário redimensionar a janela?
+
+6. Licoes aprendidas (refactor MenuUi -> Dashboard)
+- Preferir TableLayoutPanel como container principal para evitar ajustes manuais de largura.
+- Agrupar funcoes em grupos visuais (ex.: Relatorios, Selecao, Acoes) reduz carga cognitiva.
+- Header e footer devem ser fixos; conteudo central pode ser scrollable.
+- Evitar cores hardcoded; criar constantes C_... e F_... para manter consistencia.
+- Buttons devem seguir um unico helper para padronizar hover, padding e borda.
+- Input e labels devem respeitar Padding/Margin para nao colar no container.
+- Evitar ajustar largura via SizeChanged quando o layout pode resolver sozinho.
+- Editar UI em src/*.cs e gerar o macro; nao edite macros/*.cs diretamente.

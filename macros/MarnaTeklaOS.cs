@@ -36,23 +36,33 @@ internal static class MenuUi
     private static readonly Color C_Cabecalho = Color.FromArgb(0, 80, 150);
     private static readonly Color C_TextoPrimario = Color.FromArgb(30, 30, 30);
     private static readonly Color C_TextoSecundario = Color.FromArgb(100, 110, 120);
-    
+    private static readonly Color C_TextoClaro = Color.White;
+    private static readonly Color C_TextoCabecalhoSec = Color.FromArgb(200, 220, 255);
+    private static readonly Color C_Borda = Color.FromArgb(220, 224, 230);
+    private static readonly Color C_Transparente = Color.Transparent;
+
     // Cores de Acao
     private static readonly Color C_BotaoHover = Color.FromArgb(245, 248, 255);
     private static readonly Color C_DestaqueAzul = Color.FromArgb(0, 120, 215);
     private static readonly Color C_DestaqueVermelho = Color.FromArgb(220, 53, 69);
     private static readonly Color C_FundoVermelhoSuave = Color.FromArgb(255, 245, 245);
+    private static readonly Color C_FundoVermelhoHover = Color.FromArgb(255, 230, 230);
+
+    // Tipografia
+    private static readonly Font F_Titulo = new Font("Segoe UI", 12F, FontStyle.Bold);
+    private static readonly Font F_Texto = new Font("Segoe UI", 10F, FontStyle.Regular);
+    private static readonly Font F_Secao = new Font("Segoe UI", 10F, FontStyle.Bold);
 
     public static void Show(Tekla.Macros.Runtime.IMacroRuntime runtime)
     {
         using (var form = new Form())
         {
-            // 1. Configura????es da Janela
-            form.Text = "MarnaTeklaOS";
+            // 1. Configuracoes da Janela
+            form.Text = "MarnaTeklaOS - Painel de Controle";
             form.StartPosition = FormStartPosition.CenterScreen;
-            form.Size = new Size(420, 520); // Aumentei um pouco para caber o logo confortavel
-            form.MinimumSize = new Size(400, 450);
-            form.Font = new Font("Segoe UI", 9F, FontStyle.Regular);
+            form.Size = new Size(480, 600);
+            form.MinimumSize = new Size(440, 520);
+            form.Font = F_Texto;
             form.BackColor = C_FundoForm;
             form.FormBorderStyle = FormBorderStyle.FixedSingle;
             form.MaximizeBox = false;
@@ -61,157 +71,146 @@ internal static class MenuUi
             // --- APLICANDO O ICONE DA JANELA ---
             // Se a string Base64 estiver vazia, usa o padrao. Se tiver conteudo, carrega.
             try {
-                if(!string.IsNullOrEmpty(Assets.IconeJanelaBase64)) 
+                if(!string.IsNullOrEmpty(Assets.IconeJanelaBase64))
                     form.Icon = Assets.GetIcon();
             } catch {} // Ignora erro de icone para nao travar a macro
 
+            var mainLayout = new TableLayoutPanel();
+            mainLayout.Dock = DockStyle.Fill;
+            mainLayout.ColumnCount = 1;
+            mainLayout.RowCount = 3;
+            mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 92F));
+            mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+            mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 56F));
+
             // 2. Cabecalho (Header)
             var headerPanel = new Panel();
-            headerPanel.Dock = DockStyle.Top;
-            headerPanel.Height = 80; // Mais alto para o Logo
+            headerPanel.Dock = DockStyle.Fill;
             headerPanel.BackColor = C_Cabecalho;
-            headerPanel.Padding = new Padding(16);
-            
-            // Container para alinhar Logo + Texto
+            headerPanel.Padding = new Padding(16, 12, 16, 12);
+
             var headerLayout = new TableLayoutPanel();
             headerLayout.Dock = DockStyle.Fill;
             headerLayout.ColumnCount = 2;
             headerLayout.RowCount = 1;
-            // Coluna 1: Auto (Logo), Coluna 2: 100% (Texto)
             headerLayout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             headerLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-            
-            // --- LOGO ---
+
             var logoBox = new PictureBox();
             logoBox.SizeMode = PictureBoxSizeMode.Zoom;
-            logoBox.Size = new Size(60, 50); // Tamanho do logo
-            logoBox.Margin = new Padding(0, 0, 16, 0); // Espaco a direita do logo
-            logoBox.BackColor = Color.Transparent;
-            
+            logoBox.Size = new Size(56, 48);
+            logoBox.Margin = new Padding(0, 0, 12, 0);
+            logoBox.BackColor = C_Transparente;
+
             try {
                 if(!string.IsNullOrEmpty(Assets.LogoPngBase64))
                     logoBox.Image = Assets.GetLogo();
             } catch {}
 
-            // --- TEXTOS ---
             var textPanel = new Panel();
             textPanel.Dock = DockStyle.Fill;
             textPanel.Margin = new Padding(0);
 
             var lblTitle = new Label();
             lblTitle.Text = "MarnaTeklaOS";
-            lblTitle.ForeColor = Color.White;
-            lblTitle.Font = new Font("Segoe UI", 16F, FontStyle.Bold);
+            lblTitle.ForeColor = C_TextoClaro;
+            lblTitle.Font = F_Titulo;
             lblTitle.AutoSize = true;
             lblTitle.Dock = DockStyle.Top;
-            
+
             var lblSub = new Label();
             lblSub.Text = "Utilitarios para Tekla Structures";
-            lblSub.ForeColor = Color.FromArgb(200, 220, 255);
-            lblSub.Font = new Font("Segoe UI", 9F);
+            lblSub.ForeColor = C_TextoCabecalhoSec;
+            lblSub.Font = F_Texto;
             lblSub.AutoSize = true;
             lblSub.Dock = DockStyle.Top;
 
-            textPanel.Controls.Add(lblSub); // Ordem inversa no Dock Top? Nao, aqui adicionamos normal
+            textPanel.Controls.Add(lblSub);
             textPanel.Controls.Add(lblTitle);
-            // Corrige ordem visual (Title em cima)
             lblTitle.BringToFront();
 
-            // Adiciona ao Layout do Header
             headerLayout.Controls.Add(logoBox, 0, 0);
             headerLayout.Controls.Add(textPanel, 1, 0);
             headerPanel.Controls.Add(headerLayout);
 
-            // 3. Container de Conteudo
+            // 3. Dashboard de Conteudo
             var contentPanel = new Panel();
             contentPanel.Dock = DockStyle.Fill;
             contentPanel.Padding = new Padding(16);
-            
-            var flowLayout = new FlowLayoutPanel();
-            flowLayout.Dock = DockStyle.Fill;
-            flowLayout.FlowDirection = FlowDirection.TopDown;
-            flowLayout.WrapContents = false;
-            flowLayout.AutoScroll = true;
-            flowLayout.AutoSize = false;
-            flowLayout.SizeChanged += (s, e) => AjustarLarguraCards(flowLayout);
+            contentPanel.AutoScroll = true;
 
-            // --- CARTAO 1: Relatorios ---
-            var cardReports = CriarCartao("RELATORIOS E CONSULTAS");
-            
-            var btnGeral = CriarBotaoPro("Gerar Relatorio do Modelo", C_DestaqueAzul, false);
-            btnGeral.Click += delegate { 
+            var dashboardLayout = new TableLayoutPanel();
+            dashboardLayout.Dock = DockStyle.Top;
+            dashboardLayout.AutoSize = true;
+            dashboardLayout.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            dashboardLayout.ColumnCount = 1;
+            dashboardLayout.RowCount = 0;
+            dashboardLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+
+            var grpReports = CriarGrupoDashboard("Relatorios e consultas");
+            var reportsLayout = CriarLayoutVertical();
+
+            var btnGeral = CriarBotaoDashboard("Gerar relatorio do modelo", false);
+            btnGeral.Click += delegate {
                 string r = ReportBuilder.BuildReport();
                 if(!string.IsNullOrEmpty(r)) ReportWindow.ShowReport(r);
             };
 
-            var btnSel = CriarBotaoPro("Ver Pecas Selecionadas", C_DestaqueAzul, false);
+            var btnSel = CriarBotaoDashboard("Ver pecas selecionadas", false);
             btnSel.Click += delegate {
                 string r = ReportBuilder.BuildSelectedPartsReport();
                 if(!string.IsNullOrEmpty(r)) ReportWindow.ShowReport(r);
             };
 
-            cardReports.Controls.Add(btnSel);
-            cardReports.Controls.Add(btnGeral);
-            cardReports.Controls.Add(CriarDivisor());
+            AdicionarLinha(reportsLayout, btnGeral);
+            AdicionarLinha(reportsLayout, btnSel);
+            grpReports.Controls.Add(reportsLayout);
+            AdicionarLinha(dashboardLayout, grpReports);
 
-            // --- CARTAO 2: Selecao de pecas ---
-            var cardSelection = CriarCartao("SELECIONAR PECAS");
+            var grpSelection = CriarGrupoDashboard("Selecao de pecas");
+            var selectionLayout = CriarLayoutVertical();
 
-            var lblSelectionInfo = new Label();
-            lblSelectionInfo.Text = "Digite os nomes dos conjuntos separados por virgula (ex.: PP1,PP2,VR1).";
-            lblSelectionInfo.ForeColor = C_TextoSecundario;
-            lblSelectionInfo.Font = new Font("Segoe UI", 8F);
-            lblSelectionInfo.Dock = DockStyle.Top;
-            lblSelectionInfo.Padding = new Padding(0, 0, 0, 8);
-            lblSelectionInfo.Height = 30;
+            var lblSelectionInfo = CriarLabelInfo("Digite os nomes dos conjuntos separados por virgula (ex.: PP1,PP2,VR1).");
 
             var txtSelectionInput = new TextBox();
-            txtSelectionInput.Dock = DockStyle.Top;
+            txtSelectionInput.Dock = DockStyle.Fill;
             txtSelectionInput.Height = 30;
-            txtSelectionInput.Font = new Font("Segoe UI", 9F);
+            txtSelectionInput.Font = F_Texto;
             txtSelectionInput.Margin = new Padding(0, 0, 0, 8);
+            txtSelectionInput.BackColor = C_CardFundo;
 
-            var btnSelectParts = CriarBotaoPro("Selecionar pecas", C_DestaqueAzul, false);
+            var btnSelectParts = CriarBotaoDashboard("Selecionar pecas", false);
             btnSelectParts.Click += delegate {
                 AssemblySelectionHelper.SelectAssemblies(txtSelectionInput.Text);
             };
 
-            cardSelection.Controls.Add(btnSelectParts);
-            cardSelection.Controls.Add(txtSelectionInput);
-            cardSelection.Controls.Add(lblSelectionInfo);
-            cardSelection.Controls.Add(CriarDivisor());
+            AdicionarLinha(selectionLayout, lblSelectionInfo);
+            AdicionarLinha(selectionLayout, txtSelectionInput);
+            AdicionarLinha(selectionLayout, btnSelectParts);
+            grpSelection.Controls.Add(selectionLayout);
+            AdicionarLinha(dashboardLayout, grpSelection);
 
-            // --- CARTAO 3: Manutencao ---
-            var cardMaint = CriarCartao("MANUTENCAO DO SISTEMA");
-            
-            var btnRepair = CriarBotaoPro("Diagnosticar e Reparar Modelo", C_DestaqueVermelho, true);
+            var grpActions = CriarGrupoDashboard("Acoes do modelo");
+            var actionsLayout = CriarLayoutVertical();
+
+            var lblWarning = CriarLabelInfo("Use esta opcao caso o modelo apresente lentidao ou erros de numeracao.");
+            lblWarning.ForeColor = C_TextoSecundario;
+            lblWarning.Padding = new Padding(0, 0, 0, 4);
+
+            var btnRepair = CriarBotaoDashboard("Diagnosticar e reparar modelo", true);
             btnRepair.Click += delegate { TeklaCommands.RunModelRepair(runtime); };
-            
-            var lblWarning = new Label();
-            lblWarning.Text = "Use esta opcao caso o modelo apresente lentidao ou erros de numeracao.";
-            lblWarning.ForeColor = Color.Gray;
-            lblWarning.Font = new Font("Segoe UI", 8F, FontStyle.Italic);
-            lblWarning.Dock = DockStyle.Top;
-            lblWarning.Padding = new Padding(5, 0, 5, 8);
-            lblWarning.Height = 40;
 
-            cardMaint.Controls.Add(lblWarning);
-            cardMaint.Controls.Add(btnRepair);
-            cardMaint.Controls.Add(CriarDivisor());
+            AdicionarLinha(actionsLayout, lblWarning);
+            AdicionarLinha(actionsLayout, btnRepair);
+            grpActions.Controls.Add(actionsLayout);
+            AdicionarLinha(dashboardLayout, grpActions);
 
-            flowLayout.Controls.Add(cardReports);
-            flowLayout.Controls.Add(new Panel { Height = 16 });
-            flowLayout.Controls.Add(cardSelection);
-            flowLayout.Controls.Add(new Panel { Height = 16 });
-            flowLayout.Controls.Add(cardMaint);
-            contentPanel.Controls.Add(flowLayout);
-            AjustarLarguraCards(flowLayout);
+            contentPanel.Controls.Add(dashboardLayout);
 
             // 4. Rodape
             var footerPanel = new Panel();
-            footerPanel.Dock = DockStyle.Bottom;
-            footerPanel.Height = 48;
-            footerPanel.BackColor = Color.White;
+            footerPanel.Dock = DockStyle.Fill;
+            footerPanel.BackColor = C_CardFundo;
             footerPanel.Padding = new Padding(16, 8, 16, 8);
 
             var chkTransp = new CheckBox();
@@ -220,107 +219,120 @@ internal static class MenuUi
             chkTransp.Cursor = Cursors.Hand;
             chkTransp.Dock = DockStyle.Left;
             chkTransp.ForeColor = C_TextoSecundario;
+            chkTransp.BackColor = C_CardFundo;
+            chkTransp.Font = F_Texto;
             chkTransp.CheckedChanged += delegate { form.Opacity = chkTransp.Checked ? 0.85 : 1.0; };
 
             var btnClose = new Button();
             btnClose.Text = "Fechar";
             btnClose.AutoSize = false;
-            btnClose.Size = new Size(80, 28);
+            btnClose.Size = new Size(90, 30);
             btnClose.Dock = DockStyle.Right;
             btnClose.FlatStyle = FlatStyle.Flat;
             btnClose.FlatAppearance.BorderSize = 1;
-            btnClose.FlatAppearance.BorderColor = Color.LightGray;
-            btnClose.BackColor = Color.White;
+            btnClose.FlatAppearance.BorderColor = C_Borda;
+            btnClose.BackColor = C_CardFundo;
             btnClose.Cursor = Cursors.Hand;
+            btnClose.ForeColor = C_TextoPrimario;
+            btnClose.Font = F_Texto;
             btnClose.DialogResult = DialogResult.OK;
 
             footerPanel.Controls.Add(chkTransp);
             footerPanel.Controls.Add(btnClose);
 
-            form.Controls.Add(contentPanel);
-            form.Controls.Add(footerPanel);
-            form.Controls.Add(headerPanel);
+            mainLayout.Controls.Add(headerPanel, 0, 0);
+            mainLayout.Controls.Add(contentPanel, 0, 1);
+            mainLayout.Controls.Add(footerPanel, 0, 2);
+            form.Controls.Add(mainLayout);
+            form.AcceptButton = btnClose;
+            form.CancelButton = btnClose;
 
             form.ShowDialog();
         }
     }
 
     // --- Helpers UI ---
-    private static Panel CriarCartao(string titulo)
+    private static GroupBox CriarGrupoDashboard(string titulo)
     {
-        var card = new Panel();
-        card.BackColor = C_CardFundo;
-        card.AutoSize = true;
-        card.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-        card.Padding = new Padding(16);
-        card.Margin = new Padding(0);
-        card.Tag = "card";
-        
-        var topBorder = new Panel();
-        topBorder.Height = 2;
-        topBorder.Dock = DockStyle.Top;
-        topBorder.BackColor = Color.FromArgb(230, 230, 230);
-        
-        var lblHeader = new Label();
-        lblHeader.Text = titulo;
-        lblHeader.Font = new Font("Segoe UI", 8F, FontStyle.Bold);
-        lblHeader.ForeColor = C_TextoSecundario;
-        lblHeader.Dock = DockStyle.Top;
-        lblHeader.Padding = new Padding(0, 0, 0, 8);
-        lblHeader.Height = 25;
-
-        card.Controls.Add(lblHeader);
-        return card;
+        var group = new GroupBox();
+        group.Text = titulo;
+        group.Font = F_Secao;
+        group.ForeColor = C_TextoPrimario;
+        group.BackColor = C_CardFundo;
+        group.Dock = DockStyle.Top;
+        group.AutoSize = true;
+        group.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+        group.Padding = new Padding(12, 8, 12, 12);
+        group.Margin = new Padding(0, 0, 0, 12);
+        return group;
     }
 
-    private static void AjustarLarguraCards(FlowLayoutPanel flowLayout)
+    private static TableLayoutPanel CriarLayoutVertical()
     {
-        int width = flowLayout.ClientSize.Width - 10;
-        if (width <= 0) return;
-        foreach (Control c in flowLayout.Controls)
+        var layout = new TableLayoutPanel();
+        layout.ColumnCount = 1;
+        layout.RowCount = 0;
+        layout.Dock = DockStyle.Top;
+        layout.AutoSize = true;
+        layout.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+        layout.Margin = new Padding(0);
+        layout.Padding = new Padding(0);
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+        return layout;
+    }
+
+    private static void AdicionarLinha(TableLayoutPanel layout, Control control)
+    {
+        if (layout == null || control == null)
         {
-            c.Width = width;
-            Panel panel = c as Panel;
-            if (panel != null && "card".Equals(panel.Tag))
-            {
-                panel.MinimumSize = new Size(width, 0);
-                panel.MaximumSize = new Size(width, int.MaxValue);
-            }
+            return;
         }
+
+        int row = layout.RowCount;
+        layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        layout.Controls.Add(control, 0, row);
+        layout.RowCount = row + 1;
     }
 
-    private static Button CriarBotaoPro(string texto, Color corDestaque, bool ehPerigo)
+    private static Label CriarLabelInfo(string texto)
+    {
+        var label = new Label();
+        label.Text = texto;
+        label.ForeColor = C_TextoSecundario;
+        label.Font = F_Texto;
+        label.AutoSize = true;
+        label.Dock = DockStyle.Fill;
+        label.Margin = new Padding(0, 0, 0, 8);
+        return label;
+    }
+
+    private static Button CriarBotaoDashboard(string texto, bool ehPerigo)
     {
         var btn = new Button();
         btn.Text = texto;
-        btn.Height = 40;
-        btn.Dock = DockStyle.Top;
+        btn.Height = 36;
+        btn.Dock = DockStyle.Fill;
         btn.FlatStyle = FlatStyle.Flat;
-        btn.FlatAppearance.BorderSize = 0;
+        btn.FlatAppearance.BorderSize = 1;
+        btn.FlatAppearance.BorderColor = C_Borda;
         btn.Cursor = Cursors.Hand;
-        btn.Font = new Font("Segoe UI", 10F, FontStyle.Regular);
+        btn.Font = F_Texto;
         btn.TextAlign = ContentAlignment.MiddleLeft;
-        btn.Padding = new Padding(16, 0, 16, 0);
+        btn.Padding = new Padding(12, 0, 12, 0);
         btn.Margin = new Padding(0, 0, 0, 8);
-        btn.BackColor = ehPerigo ? C_FundoVermelhoSuave : Color.White;
+        btn.BackColor = ehPerigo ? C_FundoVermelhoSuave : C_CardFundo;
         btn.ForeColor = ehPerigo ? C_DestaqueVermelho : C_TextoPrimario;
 
         btn.MouseEnter += (s, e) => {
-            btn.BackColor = ehPerigo ? Color.FromArgb(255, 230, 230) : C_BotaoHover;
-            btn.FlatAppearance.BorderSize = 0; 
+            btn.BackColor = ehPerigo ? C_FundoVermelhoHover : C_BotaoHover;
             if (!ehPerigo) btn.ForeColor = C_DestaqueAzul;
         };
 
         btn.MouseLeave += (s, e) => {
-            btn.BackColor = ehPerigo ? C_FundoVermelhoSuave : Color.White;
+            btn.BackColor = ehPerigo ? C_FundoVermelhoSuave : C_CardFundo;
             btn.ForeColor = ehPerigo ? C_DestaqueVermelho : C_TextoPrimario;
         };
         return btn;
-    }
-
-    private static Panel CriarDivisor()
-    {
-        return new Panel { Height = 8, Dock = DockStyle.Top, BackColor = Color.Transparent };
     }
 
     // --- ASSETS (Imagens em Base64) ---
