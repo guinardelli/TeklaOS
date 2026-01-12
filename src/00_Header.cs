@@ -11,6 +11,7 @@ using System.Text;
 using System.Windows.Forms;
 using Tekla.Structures;
 using Tekla.Structures.Model;
+using Tekla.Structures.Geometry3d;
 using Tekla.Structures.Filtering;
 using Tekla.Structures.Filtering.Categories;
 using ModelUI = Tekla.Structures.Model.UI;

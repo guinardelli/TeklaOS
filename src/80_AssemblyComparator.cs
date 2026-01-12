@@ -37,241 +37,292 @@ internal static class AssemblyComparator
         Assembly ass2 = (Assembly)assemblies[1];
 
         StringBuilder sb = new StringBuilder();
-        AppendAssemblyComparison(sb, ass1, ass2);
+        AppendAssemblyComparison(sb, ass1, ass2, model);
 
         ReportWindow.ShowReport(sb.ToString());
     }
 
-    private static void AppendAssemblyComparison(StringBuilder sb, Assembly ass1, Assembly ass2)
+    private static void AppendAssemblyComparison(StringBuilder sb, Assembly ass1, Assembly ass2, Model model)
     {
-        sb.AppendLine("Comparacao de Conjuntos por POSICAO");
+        sb.AppendLine("RESULTADO COMPARADOR (NUMERACAO)");
         sb.AppendLine("Conjunto 1: " + Formatters.FormatValue(ass1.Name));
         sb.AppendLine("Conjunto 2: " + Formatters.FormatValue(ass2.Name));
         sb.AppendLine();
 
-        ArrayList parts1 = GetAssemblyParts(ass1);
-        ArrayList parts2 = GetAssemblyParts(ass2);
+        sb.AppendLine("SERIE DE NUMERACAO:");
+        bool seriesEqual = AppendNumberingSeriesComparison(sb, ass1, ass2);
+        sb.AppendLine();
 
-        Dictionary<string, ArrayList> map1 = GroupPartsByPosition(parts1);
-        Dictionary<string, ArrayList> map2 = GroupPartsByPosition(parts2);
-
-        SortedSet<string> positions = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (string pos in map1.Keys)
+        if (!seriesEqual)
         {
-            positions.Add(pos);
-        }
-        foreach (string pos in map2.Keys)
-        {
-            positions.Add(pos);
+            sb.AppendLine("Comparacao interrompida: series diferentes.");
+            sb.AppendLine();
+            return;
         }
 
-        int only1 = 0;
-        int only2 = 0;
-        int diff = 0;
-        int equal = 0;
+        sb.AppendLine("PECA PRINCIPAL:");
+        AppendMainPartComparison(sb, ass1, ass2);
+        sb.AppendLine();
 
-        StringBuilder details = new StringBuilder();
-        foreach (string pos in positions)
-        {
-            ArrayList list1;
-            ArrayList list2;
-            bool has1 = map1.TryGetValue(pos, out list1);
-            bool has2 = map2.TryGetValue(pos, out list2);
-
-            if (!has1)
-            {
-                only2++;
-                diff++;
-                Part onlyPart2 = PickRepresentative(list2);
-                string conjuntoRight = GetConjuntoLabel(GetPartPropertyOrDash(onlyPart2, "CAST_UNIT_POS"), pos);
-                details.AppendLine(string.Format("[X] Conjunto: - | {0}", conjuntoRight));
-                details.AppendLine("- Status: Somente conjunto 2");
-                AppendCompareLine(details, "Quantidade", 0, list2.Count);
-                AppendCompareLine(details, "Nome", "-", GetPartPropertyOrDash(onlyPart2, "NAME"));
-                AppendCompareLine(details, "Perfil", "-", GetPartPropertyOrDash(onlyPart2, "PROFILE"));
-                AppendCompareLine(details, "Material", "-", GetPartPropertyOrDash(onlyPart2, "MATERIAL"));
-                details.AppendLine();
-                continue;
-            }
-
-            if (!has2)
-            {
-                only1++;
-                diff++;
-                Part onlyPart1 = PickRepresentative(list1);
-                string conjuntoLeft = GetConjuntoLabel(GetPartPropertyOrDash(onlyPart1, "CAST_UNIT_POS"), pos);
-                details.AppendLine(string.Format("[X] Conjunto: {0} | -", conjuntoLeft));
-                details.AppendLine("- Status: Somente conjunto 1");
-                AppendCompareLine(details, "Quantidade", list1.Count, 0);
-                AppendCompareLine(details, "Nome", GetPartPropertyOrDash(onlyPart1, "NAME"), "-");
-                AppendCompareLine(details, "Perfil", GetPartPropertyOrDash(onlyPart1, "PROFILE"), "-");
-                AppendCompareLine(details, "Material", GetPartPropertyOrDash(onlyPart1, "MATERIAL"), "-");
-                details.AppendLine();
-                continue;
-            }
-
-            int count1 = list1.Count;
-            int count2 = list2.Count;
-            bool countMismatch = count1 != count2;
-
-            Part part1 = PickRepresentative(list1);
-            Part part2 = PickRepresentative(list2);
-
-            string name1 = GetReportProperty(part1, "NAME");
-            string name2 = GetReportProperty(part2, "NAME");
-            string profile1 = GetReportProperty(part1, "PROFILE");
-            string profile2 = GetReportProperty(part2, "PROFILE");
-            string material1 = GetReportProperty(part1, "MATERIAL");
-            string material2 = GetReportProperty(part2, "MATERIAL");
-            string castUnit1 = GetReportProperty(part1, "CAST_UNIT_POS");
-            string castUnit2 = GetReportProperty(part2, "CAST_UNIT_POS");
-
-            bool propDiff = !AreEqualNormalized(name1, name2)
-                || !AreEqualNormalized(profile1, profile2)
-                || !AreEqualNormalized(material1, material2)
-                || !AreEqualNormalized(castUnit1, castUnit2);
-
-            if (countMismatch || propDiff)
-            {
-                diff++;
-                string status = countMismatch ? "Quantidade diferente" : "Diferente";
-                string conjuntoLeft = GetConjuntoLabel(castUnit1, pos);
-                string conjuntoRight = GetConjuntoLabel(castUnit2, pos);
-                string conjuntoMark = AreEqualNormalized(conjuntoLeft, conjuntoRight) ? "[OK]" : "[X]";
-                details.AppendLine(string.Format("{0} Conjunto: {1} | {2}", conjuntoMark, conjuntoLeft, conjuntoRight));
-                details.AppendLine("- Status: " + status);
-                AppendCompareLine(details, "Quantidade", count1, count2);
-                AppendCompareLine(details, "Nome", name1, name2);
-                AppendCompareLine(details, "Perfil", profile1, profile2);
-                AppendCompareLine(details, "Material", material1, material2);
-                details.AppendLine();
-            }
-            else
-            {
-                equal++;
-            }
-        }
-
-        sb.AppendLine("Resumo");
-        sb.AppendLine(string.Format("Posicoes no conjunto 1: {0}", map1.Count));
-        sb.AppendLine(string.Format("Posicoes no conjunto 2: {0}", map2.Count));
-        sb.AppendLine(string.Format("Posicoes iguais: {0}", equal));
-        sb.AppendLine(string.Format("Posicoes com diferencas: {0}", diff));
-        sb.AppendLine(string.Format("Somente no conjunto 1: {0}", only1));
-        sb.AppendLine(string.Format("Somente no conjunto 2: {0}", only2));
+        sb.AppendLine("SECUNDARIAS:");
+        AppendSecondariesComparison(sb, ass1, ass2, model);
         sb.AppendLine();
 
         sb.AppendLine("PROPRIEDADES DO CONJUNTO:");
         AppendAssemblyPropertiesComparison(sb, ass1, ass2);
         sb.AppendLine();
-
-        sb.AppendLine("RESULTADO COMPARADOR:");
-
-        if (details.Length == 0)
-        {
-            sb.AppendLine("Nenhuma diferenca encontrada.");
-        }
-        else
-        {
-            sb.Append(details.ToString());
-        }
-
-        sb.AppendLine();
     }
 
-    private static ArrayList GetAssemblyParts(Assembly ass)
+    private static bool AppendNumberingSeriesComparison(StringBuilder sb, Assembly ass1, Assembly ass2)
     {
-        ArrayList parts = new ArrayList();
-        Part mainPart = ass.GetMainPart() as Part;
-        if (mainPart != null)
-        {
-            parts.Add(mainPart);
-        }
+        string prefix1 = GetAssemblyNumberPrefix(ass1);
+        string prefix2 = GetAssemblyNumberPrefix(ass2);
+        string start1 = GetAssemblyNumberStart(ass1);
+        string start2 = GetAssemblyNumberStart(ass2);
 
-        ArrayList secondaryParts = ass.GetSecondaries();
-        foreach (ModelObject secondary in secondaryParts)
-        {
-            Part part = secondary as Part;
-            if (part != null)
-            {
-                parts.Add(part);
-            }
-        }
+        AppendCompareLine(sb, "Prefixo", prefix1, prefix2);
+        AppendCompareLine(sb, "StartNumber", start1, start2);
 
-        return parts;
+        return AreEqualNormalized(prefix1, prefix2) && AreEqualNormalized(start1, start2);
     }
 
-    private static Dictionary<string, ArrayList> GroupPartsByPosition(ArrayList parts)
+    private static void AppendMainPartComparison(StringBuilder sb, Assembly ass1, Assembly ass2)
     {
-        Dictionary<string, ArrayList> map = new Dictionary<string, ArrayList>(StringComparer.OrdinalIgnoreCase);
-        foreach (Part part in parts)
+        Part main1 = ass1.GetMainPart() as Part;
+        Part main2 = ass2.GetMainPart() as Part;
+
+        if (main1 == null || main2 == null)
         {
-            if (part == null)
+            sb.AppendLine("[X] Peca principal: nao encontrada em um dos conjuntos.");
+            return;
+        }
+
+        AppendCompareLine(sb, "Perfil", GetReportProperty(main1, "PROFILE"), GetReportProperty(main2, "PROFILE"));
+        AppendCompareLine(sb, "Material", GetReportProperty(main1, "MATERIAL"), GetReportProperty(main2, "MATERIAL"));
+        AppendCompareLine(sb, "Acabamento", GetPartFinish(main1), GetPartFinish(main2));
+        AppendCompareLine(sb, "Deformacao", GetReportProperty(main1, "DEFORMATION"), GetReportProperty(main2, "DEFORMATION"));
+        AppendCompareLine(sb, "Nome (config)", GetPartName(main1), GetPartName(main2));
+        AppendCompareLine(sb, "Classe (info)", GetPartClass(main1), GetPartClass(main2));
+    }
+
+    private static void AppendSecondariesComparison(StringBuilder sb, Assembly ass1, Assembly ass2, Model model)
+    {
+        int count1;
+        int count2;
+        Dictionary<string, int> map1 = BuildSecondarySignatureCounts(ass1, model, out count1);
+        Dictionary<string, int> map2 = BuildSecondarySignatureCounts(ass2, model, out count2);
+
+        AppendCompareLine(sb, "Quantidade", count1, count2);
+
+        List<string> diffLines = BuildSecondaryDiffLines(map1, map2);
+        AppendStatusLine(sb, "Geometria/posicao relativa", diffLines.Count == 0);
+
+        if (diffLines.Count > 0)
+        {
+            foreach (string line in diffLines)
             {
-                continue;
+                sb.AppendLine(line);
+            }
+        }
+    }
+
+    private static Dictionary<string, int> BuildSecondarySignatureCounts(Assembly ass, Model model, out int count)
+    {
+        Dictionary<string, int> map = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        count = 0;
+
+        if (ass == null || model == null)
+        {
+            return map;
+        }
+
+        Part main = ass.GetMainPart() as Part;
+
+        WorkPlaneHandler handler = model.GetWorkPlaneHandler();
+        TransformationPlane originalPlane = handler.GetCurrentTransformationPlane();
+
+        try
+        {
+            if (main != null)
+            {
+                handler.SetCurrentTransformationPlane(new TransformationPlane(main.GetCoordinateSystem()));
             }
 
-            string key = GetPositionKey(part);
-            ArrayList list;
-            if (!map.TryGetValue(key, out list))
+            ArrayList secondaries = ass.GetSecondaries();
+            foreach (ModelObject obj in secondaries)
             {
-                list = new ArrayList();
-                map.Add(key, list);
+                Part part = obj as Part;
+                if (part == null)
+                {
+                    continue;
+                }
+
+                count++;
+                string signature = BuildSecondarySignature(part);
+                int current;
+                if (map.TryGetValue(signature, out current))
+                {
+                    map[signature] = current + 1;
+                }
+                else
+                {
+                    map.Add(signature, 1);
+                }
             }
-            list.Add(part);
         }
+        finally
+        {
+            handler.SetCurrentTransformationPlane(originalPlane);
+        }
+
         return map;
     }
 
-    private static string GetPositionKey(Part part)
+    private static string BuildSecondarySignature(Part part)
     {
-        string position = GetReportProperty(part, "POSITION");
-        if (string.IsNullOrWhiteSpace(position) || position == "-")
-        {
-            string name = NormalizeKeyValue(GetReportProperty(part, "NAME"));
-            string profile = NormalizeKeyValue(GetReportProperty(part, "PROFILE"));
-            string material = NormalizeKeyValue(GetReportProperty(part, "MATERIAL"));
-            return string.Format("SEM_POSICAO_{0}_{1}_{2}", name, profile, material);
-        }
+        string profile = NormalizeKeyValue(GetReportProperty(part, "PROFILE"));
+        string material = NormalizeKeyValue(GetReportProperty(part, "MATERIAL"));
+        Box box = GetLocalBoundingBox(part);
 
-        return position.Trim();
+        return string.Format("Perfil={0};Material={1};Box={2}", profile, material, FormatBox(box));
     }
 
-    private static string NormalizeKeyValue(string value)
+    private struct Box
     {
-        if (string.IsNullOrWhiteSpace(value) || value == "-")
-        {
-            return "N/A";
-        }
+        public Point Min;
+        public Point Max;
 
-        return value.Trim().ToUpperInvariant().Replace(" ", "_");
+        public Box(Point min, Point max)
+        {
+            Min = min;
+            Max = max;
+        }
     }
 
-    private static Part PickRepresentative(ArrayList parts)
+    private static Box GetLocalBoundingBox(Part part)
     {
-        Part selected = null;
-        long minId = long.MaxValue;
-        foreach (Part part in parts)
-        {
-            if (part == null)
-            {
-                continue;
-            }
+        Solid solid = part.GetSolid();
+        Point min = solid.MinimumPoint;
+        Point max = solid.MaximumPoint;
+        return new Box(min, max);
+    }
 
-            long id = part.Identifier.ID;
-            if (selected == null || id < minId)
+    private static string FormatBox(Box box)
+    {
+        return string.Format(
+            "Min({0},{1},{2}) Max({3},{4},{5})",
+            FormatCoordinate(box.Min.X),
+            FormatCoordinate(box.Min.Y),
+            FormatCoordinate(box.Min.Z),
+            FormatCoordinate(box.Max.X),
+            FormatCoordinate(box.Max.Y),
+            FormatCoordinate(box.Max.Z));
+    }
+
+    private static string FormatCoordinate(double value)
+    {
+        double rounded = RoundToTolerance(value);
+        return string.Format("{0:F3}", rounded);
+    }
+
+    private static double RoundToTolerance(double value)
+    {
+        double tol = GeometryConstants.DISTANCE_EPSILON;
+        if (tol <= 0.0)
+        {
+            tol = 0.001;
+        }
+
+        return Math.Round(value / tol) * tol;
+    }
+
+    private static List<string> BuildSecondaryDiffLines(Dictionary<string, int> map1, Dictionary<string, int> map2)
+    {
+        List<string> lines = new List<string>();
+        SortedSet<string> keys = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (string key in map1.Keys)
+        {
+            keys.Add(key);
+        }
+        foreach (string key in map2.Keys)
+        {
+            keys.Add(key);
+        }
+
+        foreach (string key in keys)
+        {
+            int count1 = map1.ContainsKey(key) ? map1[key] : 0;
+            int count2 = map2.ContainsKey(key) ? map2[key] : 0;
+
+            if (count1 > count2)
             {
-                selected = part;
-                minId = id;
+                lines.Add(string.Format("[X] Secundaria faltando no conjunto 2: {0} (x{1})", key, count1 - count2));
+            }
+            else if (count2 > count1)
+            {
+                lines.Add(string.Format("[X] Secundaria extra no conjunto 2: {0} (x{1})", key, count2 - count1));
             }
         }
 
-        if (selected == null && parts.Count > 0)
+        return lines;
+    }
+
+    private static void AppendStatusLine(StringBuilder sb, string label, bool ok)
+    {
+        string mark = ok ? "[OK]" : "[X]";
+        string status = ok ? "Iguais" : "Diferentes";
+        sb.AppendLine(string.Format("{0} {1}: {2}", mark, label, status));
+    }
+
+    private static string GetAssemblyNumberPrefix(Assembly ass)
+    {
+        if (ass == null || ass.AssemblyNumber == null)
         {
-            selected = parts[0] as Part;
+            return "-";
         }
 
-        return selected;
+        return Formatters.FormatValue(ass.AssemblyNumber.Prefix);
+    }
+
+    private static string GetAssemblyNumberStart(Assembly ass)
+    {
+        if (ass == null || ass.AssemblyNumber == null)
+        {
+            return "-";
+        }
+
+        return ass.AssemblyNumber.StartNumber.ToString();
+    }
+
+    private static string GetPartFinish(Part part)
+    {
+        if (part == null)
+        {
+            return "-";
+        }
+
+        return Formatters.FormatValue(part.Finish);
+    }
+
+    private static string GetPartName(Part part)
+    {
+        if (part == null)
+        {
+            return "-";
+        }
+
+        return Formatters.FormatValue(part.Name);
+    }
+
+    private static string GetPartClass(Part part)
+    {
+        if (part == null)
+        {
+            return "-";
+        }
+
+        return part.Class.ToString();
     }
 
     private static void AppendCompareLine(StringBuilder sb, string label, string leftValue, string rightValue)
@@ -338,27 +389,14 @@ internal static class AssemblyComparator
         return value;
     }
 
-    private static string GetConjuntoLabel(string castUnitPos, string positionKey)
+    private static string NormalizeKeyValue(string value)
     {
-        if (castUnitPos == "-" && !string.IsNullOrWhiteSpace(positionKey))
+        if (string.IsNullOrWhiteSpace(value) || value == "-")
         {
-            if (!positionKey.StartsWith("SEM_POSICAO_", StringComparison.OrdinalIgnoreCase))
-            {
-                return positionKey.Trim();
-            }
+            return "N/A";
         }
 
-        return castUnitPos;
-    }
-
-    private static string GetPartPropertyOrDash(Part part, string propertyName)
-    {
-        if (part == null)
-        {
-            return "-";
-        }
-
-        return GetReportProperty(part, propertyName);
+        return value.Trim().ToUpperInvariant().Replace(" ", "_");
     }
 
     private static bool AreEqualNormalized(string left, string right)
