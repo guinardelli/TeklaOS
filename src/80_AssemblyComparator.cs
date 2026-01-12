@@ -1,6 +1,6 @@
 internal static class AssemblyComparator
 {
-    private const bool IncludeOkDetails = false;
+    private const bool IncludeOkDetails = true;
 
     public static void CompareSelectedAssemblies()
     {
