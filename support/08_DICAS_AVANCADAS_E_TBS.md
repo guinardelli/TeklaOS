@@ -14,3 +14,4 @@ Aprendizados recentes (AssemblyComparator / Tekla 2023)
 - `GetSecondaries()` retorna `ArrayList`. Percorra com `foreach (ModelObject obj in list)` e faca cast para `Part`.
 - Se aparecer CS0266/CS0029, revise tipos de retorno e use cast explicito.
 - Em blocos encadeados, evite redeclarar `part1`/`part2` (ou qualquer nome) em escopos filhos para nao gerar CS0136; use identificadores diferentes quando precisar de variaveis temporarias.
+- CS0104 (`Point` ambiguo entre `System.Drawing` e `Tekla.Structures.Geometry3d`): use `Tekla.Structures.Geometry3d.Point` totalmente qualificado ou defina um alias no header para evitar conflito.

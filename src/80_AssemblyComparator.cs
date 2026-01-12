@@ -1,5 +1,7 @@
 internal static class AssemblyComparator
 {
+    private const bool IncludeOkDetails = false;
+
     public static void CompareSelectedAssemblies()
     {
         Model model = new Model();
@@ -80,10 +82,30 @@ internal static class AssemblyComparator
         string start1 = GetAssemblyNumberStart(ass1);
         string start2 = GetAssemblyNumberStart(ass2);
 
-        AppendCompareLine(sb, "Prefixo", prefix1, prefix2);
-        AppendCompareLine(sb, "StartNumber", start1, start2);
+        int okCount = 0;
+        int diffCount = 0;
 
-        return AreEqualNormalized(prefix1, prefix2) && AreEqualNormalized(start1, start2);
+        if (AppendCompareLine(sb, "Prefixo", prefix1, prefix2))
+        {
+            okCount++;
+        }
+        else
+        {
+            diffCount++;
+        }
+
+        if (AppendCompareLine(sb, "StartNumber", start1, start2))
+        {
+            okCount++;
+        }
+        else
+        {
+            diffCount++;
+        }
+
+        AppendSectionSummary(sb, okCount, diffCount);
+
+        return diffCount == 0;
     }
 
     private static void AppendMainPartComparison(StringBuilder sb, Assembly ass1, Assembly ass2)
@@ -97,12 +119,64 @@ internal static class AssemblyComparator
             return;
         }
 
-        AppendCompareLine(sb, "Perfil", GetReportProperty(main1, "PROFILE"), GetReportProperty(main2, "PROFILE"));
-        AppendCompareLine(sb, "Material", GetReportProperty(main1, "MATERIAL"), GetReportProperty(main2, "MATERIAL"));
-        AppendCompareLine(sb, "Acabamento", GetPartFinish(main1), GetPartFinish(main2));
-        AppendCompareLine(sb, "Deformacao", GetReportProperty(main1, "DEFORMATION"), GetReportProperty(main2, "DEFORMATION"));
-        AppendCompareLine(sb, "Nome (config)", GetPartName(main1), GetPartName(main2));
-        AppendCompareLine(sb, "Classe (info)", GetPartClass(main1), GetPartClass(main2));
+        int okCount = 0;
+        int diffCount = 0;
+
+        if (AppendCompareLine(sb, "Perfil", GetReportProperty(main1, "PROFILE"), GetReportProperty(main2, "PROFILE")))
+        {
+            okCount++;
+        }
+        else
+        {
+            diffCount++;
+        }
+
+        if (AppendCompareLine(sb, "Material", GetReportProperty(main1, "MATERIAL"), GetReportProperty(main2, "MATERIAL")))
+        {
+            okCount++;
+        }
+        else
+        {
+            diffCount++;
+        }
+
+        if (AppendCompareLine(sb, "Acabamento", GetPartFinish(main1), GetPartFinish(main2)))
+        {
+            okCount++;
+        }
+        else
+        {
+            diffCount++;
+        }
+
+        if (AppendCompareLine(sb, "Deformacao", GetReportProperty(main1, "DEFORMATION"), GetReportProperty(main2, "DEFORMATION")))
+        {
+            okCount++;
+        }
+        else
+        {
+            diffCount++;
+        }
+
+        if (AppendCompareLine(sb, "Nome (config)", GetPartName(main1), GetPartName(main2)))
+        {
+            okCount++;
+        }
+        else
+        {
+            diffCount++;
+        }
+
+        if (AppendCompareLine(sb, "Classe (info)", GetPartClass(main1), GetPartClass(main2)))
+        {
+            okCount++;
+        }
+        else
+        {
+            diffCount++;
+        }
+
+        AppendSectionSummary(sb, okCount, diffCount);
     }
 
     private static void AppendSecondariesComparison(StringBuilder sb, Assembly ass1, Assembly ass2, Model model)
@@ -112,10 +186,28 @@ internal static class AssemblyComparator
         Dictionary<string, int> map1 = BuildSecondarySignatureCounts(ass1, model, out count1);
         Dictionary<string, int> map2 = BuildSecondarySignatureCounts(ass2, model, out count2);
 
-        AppendCompareLine(sb, "Quantidade", count1, count2);
+        int okCount = 0;
+        int diffCount = 0;
+
+        if (AppendCompareLine(sb, "Quantidade", count1, count2))
+        {
+            okCount++;
+        }
+        else
+        {
+            diffCount++;
+        }
 
         List<string> diffLines = BuildSecondaryDiffLines(map1, map2);
-        AppendStatusLine(sb, "Geometria/posicao relativa", diffLines.Count == 0);
+        bool geomOk = diffLines.Count == 0;
+        if (AppendStatusLine(sb, "Geometria/posicao relativa", geomOk))
+        {
+            okCount++;
+        }
+        else
+        {
+            diffCount++;
+        }
 
         if (diffLines.Count > 0)
         {
@@ -124,6 +216,8 @@ internal static class AssemblyComparator
                 sb.AppendLine(line);
             }
         }
+
+        AppendSectionSummary(sb, okCount, diffCount);
     }
 
     private static Dictionary<string, int> BuildSecondarySignatureCounts(Assembly ass, Model model, out int count)
@@ -189,10 +283,10 @@ internal static class AssemblyComparator
 
     private struct Box
     {
-        public Point Min;
-        public Point Max;
+        public Tekla.Structures.Geometry3d.Point Min;
+        public Tekla.Structures.Geometry3d.Point Max;
 
-        public Box(Point min, Point max)
+        public Box(Tekla.Structures.Geometry3d.Point min, Tekla.Structures.Geometry3d.Point max)
         {
             Min = min;
             Max = max;
@@ -202,8 +296,8 @@ internal static class AssemblyComparator
     private static Box GetLocalBoundingBox(Part part)
     {
         Solid solid = part.GetSolid();
-        Point min = solid.MinimumPoint;
-        Point max = solid.MaximumPoint;
+        Tekla.Structures.Geometry3d.Point min = solid.MinimumPoint;
+        Tekla.Structures.Geometry3d.Point max = solid.MaximumPoint;
         return new Box(min, max);
     }
 
@@ -268,11 +362,16 @@ internal static class AssemblyComparator
         return lines;
     }
 
-    private static void AppendStatusLine(StringBuilder sb, string label, bool ok)
+    private static bool AppendStatusLine(StringBuilder sb, string label, bool ok)
     {
-        string mark = ok ? "[OK]" : "[X]";
-        string status = ok ? "Iguais" : "Diferentes";
-        sb.AppendLine(string.Format("{0} {1}: {2}", mark, label, status));
+        if (!ok || IncludeOkDetails)
+        {
+            string mark = ok ? "[OK]" : "[X]";
+            string status = ok ? "Iguais" : "Diferentes";
+            sb.AppendLine(string.Format("{0} {1}: {2}", mark, label, status));
+        }
+
+        return ok;
     }
 
     private static string GetAssemblyNumberPrefix(Assembly ass)
@@ -325,18 +424,49 @@ internal static class AssemblyComparator
         return part.Class.ToString();
     }
 
-    private static void AppendCompareLine(StringBuilder sb, string label, string leftValue, string rightValue)
+    private static bool AppendCompareLine(StringBuilder sb, string label, string leftValue, string rightValue)
     {
-        string mark = AreEqualNormalized(leftValue, rightValue) ? "[OK]" : "[X]";
-        sb.AppendLine(string.Format("{0} {1}: {2} | {3}", mark, label, leftValue, rightValue));
+        bool ok = AreEqualNormalized(leftValue, rightValue);
+        if (!ok || IncludeOkDetails)
+        {
+            string mark = ok ? "[OK]" : "[X]";
+            sb.AppendLine(string.Format("{0} {1}: {2} | {3}", mark, label, leftValue, rightValue));
+        }
+
+        return ok;
     }
 
-    private static void AppendCompareLine(StringBuilder sb, string label, int leftCount, int rightCount)
+    private static bool AppendCompareLine(StringBuilder sb, string label, int leftCount, int rightCount)
     {
         string leftText = FormatQuantity(leftCount);
         string rightText = FormatQuantity(rightCount);
-        string mark = leftCount == rightCount ? "[OK]" : "[X]";
-        sb.AppendLine(string.Format("{0} {1}: {2} | {3}", mark, label, leftText, rightText));
+        bool ok = leftCount == rightCount;
+        if (!ok || IncludeOkDetails)
+        {
+            string mark = ok ? "[OK]" : "[X]";
+            sb.AppendLine(string.Format("{0} {1}: {2} | {3}", mark, label, leftText, rightText));
+        }
+
+        return ok;
+    }
+
+    private static void AppendSectionSummary(StringBuilder sb, int okCount, int diffCount)
+    {
+        if (IncludeOkDetails)
+        {
+            return;
+        }
+
+        if (diffCount == 0 && okCount > 0)
+        {
+            sb.AppendLine(string.Format("[OK] Todos iguais ({0} linhas ocultas).", okCount));
+            return;
+        }
+
+        if (okCount > 0)
+        {
+            sb.AppendLine(string.Format("[OK] Linhas iguais ocultas: {0}", okCount));
+        }
     }
 
     private static string FormatQuantity(int count)
@@ -351,24 +481,29 @@ internal static class AssemblyComparator
 
     private static void AppendAssemblyPropertiesComparison(StringBuilder sb, Assembly ass1, Assembly ass2)
     {
-        AppendAssemblyPropertyLine(sb, ass1, ass2, "AREA");
-        AppendAssemblyPropertyLine(sb, ass1, ass2, "ASSEMBLY_PREFIX");
-        AppendAssemblyPropertyLine(sb, ass1, ass2, "WIDTH");
-        AppendAssemblyPropertyLine(sb, ass1, ass2, "HEIGHT");
-        AppendAssemblyPropertyLine(sb, ass1, ass2, "LENGHT");
-        AppendAssemblyPropertyLine(sb, ass1, ass2, "LENGHT_GROSS");
-        AppendAssemblyPropertyLine(sb, ass1, ass2, "MATERIAL_TYPE");
-        AppendAssemblyPropertyLine(sb, ass1, ass2, "VOLUME");
-        AppendAssemblyPropertyLine(sb, ass1, ass2, "WEIGHT");
-        AppendAssemblyPropertyLine(sb, ass1, ass2, "WEIGHT_GROSS");
-        AppendAssemblyPropertyLine(sb, ass1, ass2, "WEIGHT_NET");
+        int okCount = 0;
+        int diffCount = 0;
+
+        if (AppendAssemblyPropertyLine(sb, ass1, ass2, "AREA")) okCount++; else diffCount++;
+        if (AppendAssemblyPropertyLine(sb, ass1, ass2, "ASSEMBLY_PREFIX")) okCount++; else diffCount++;
+        if (AppendAssemblyPropertyLine(sb, ass1, ass2, "WIDTH")) okCount++; else diffCount++;
+        if (AppendAssemblyPropertyLine(sb, ass1, ass2, "HEIGHT")) okCount++; else diffCount++;
+        if (AppendAssemblyPropertyLine(sb, ass1, ass2, "LENGHT")) okCount++; else diffCount++;
+        if (AppendAssemblyPropertyLine(sb, ass1, ass2, "LENGHT_GROSS")) okCount++; else diffCount++;
+        if (AppendAssemblyPropertyLine(sb, ass1, ass2, "MATERIAL_TYPE")) okCount++; else diffCount++;
+        if (AppendAssemblyPropertyLine(sb, ass1, ass2, "VOLUME")) okCount++; else diffCount++;
+        if (AppendAssemblyPropertyLine(sb, ass1, ass2, "WEIGHT")) okCount++; else diffCount++;
+        if (AppendAssemblyPropertyLine(sb, ass1, ass2, "WEIGHT_GROSS")) okCount++; else diffCount++;
+        if (AppendAssemblyPropertyLine(sb, ass1, ass2, "WEIGHT_NET")) okCount++; else diffCount++;
+
+        AppendSectionSummary(sb, okCount, diffCount);
     }
 
-    private static void AppendAssemblyPropertyLine(StringBuilder sb, Assembly ass1, Assembly ass2, string propertyName)
+    private static bool AppendAssemblyPropertyLine(StringBuilder sb, Assembly ass1, Assembly ass2, string propertyName)
     {
         string leftValue = GetAssemblyProperty(ass1, propertyName);
         string rightValue = GetAssemblyProperty(ass2, propertyName);
-        AppendCompareLine(sb, propertyName, leftValue, rightValue);
+        return AppendCompareLine(sb, propertyName, leftValue, rightValue);
     }
 
     private static string GetAssemblyProperty(Assembly ass, string propertyName)
