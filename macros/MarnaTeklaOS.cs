@@ -306,8 +306,37 @@ internal static class MenuUi
                 finally { Cursor.Current = prev; }
             };
 
+            var btnMaterialAll = DesignSystem.CriarBotaoDashboard("Resumo de materiais (modelo inteiro)", false);
+            btnMaterialAll.Click += delegate {
+                var prev = Cursor.Current;
+                Cursor.Current = Cursors.WaitCursor;
+                try
+                {
+                    string r = MaterialSummary.BuildMaterialReport(false);
+                    if (!string.IsNullOrEmpty(r)) ReportWindow.ShowReport(r, "Resumo de Materiais (Modelo)");
+                }
+                finally { Cursor.Current = prev; }
+            };
+
+            var btnMaterialSel = DesignSystem.CriarBotaoDashboard("Resumo de materiais (selecao)", false);
+            btnMaterialSel.Click += delegate {
+                var prev = Cursor.Current;
+                Cursor.Current = Cursors.WaitCursor;
+                try
+                {
+                    string r = MaterialSummary.BuildMaterialReport(true);
+                    if (!string.IsNullOrEmpty(r)) ReportWindow.ShowReport(r, "Resumo de Materiais (Selecao)");
+                }
+                finally { Cursor.Current = prev; }
+            };
+
+            var btnMaterialHelp = DesignSystem.CriarBotaoHelp("Gera um resumo da quantidade de pecas e pesos agrupados por material e perfil. Ideal para orcamento e compras.");
+            var materialActions = DesignSystem.CriarLinhaComHelp(btnMaterialSel, btnMaterialHelp, 8);
+
             DesignSystem.AdicionarLinha(reportsLayout, btnGeral);
             DesignSystem.AdicionarLinha(reportsLayout, btnSel);
+            DesignSystem.AdicionarLinha(reportsLayout, btnMaterialAll);
+            DesignSystem.AdicionarLinha(reportsLayout, materialActions);
             grpReports.Controls.Add(reportsLayout);
             DesignSystem.AdicionarLinha(dashboardLayout, grpReports);
 
@@ -335,6 +364,48 @@ internal static class MenuUi
             DesignSystem.AdicionarLinha(selectionLayout, selectionActions);
             grpSelection.Controls.Add(selectionLayout);
             DesignSystem.AdicionarLinha(dashboardLayout, grpSelection);
+
+            // --- Grupo: Desenhos ---
+            var grpDrawings = DesignSystem.CriarGrupoDashboard("Vinculo Modelo e Desenho");
+            var drawingsLayout = DesignSystem.CriarLayoutVertical();
+
+            DesignSystem.AdicionarLinha(drawingsLayout, DesignSystem.CriarLabelInfo("Marca ou nome do desenho (ex: PP1):"));
+            var txtDrawingMark = new TextBox();
+            txtDrawingMark.Multiline = false;
+            txtDrawingMark.Dock = DockStyle.Fill;
+            txtDrawingMark.Height = 28;
+            txtDrawingMark.Font = DesignSystem.F_Texto;
+            txtDrawingMark.Margin = new Padding(0, 0, 0, 8);
+            txtDrawingMark.BackColor = DesignSystem.C_CardFundo;
+            DesignSystem.AdicionarLinha(drawingsLayout, txtDrawingMark);
+
+            var btnSelectFromDraw = DesignSystem.CriarBotaoDashboard("Selecionar peca base do modelo", false);
+            btnSelectFromDraw.Click += delegate { 
+                var prev = Cursor.Current;
+                Cursor.Current = Cursors.WaitCursor;
+                try {
+                    DrawingModelLinker.SelectModelPartFromDrawingMark(txtDrawingMark.Text); 
+                } finally { Cursor.Current = prev; }
+            };
+            var btnSelectFromDrawHelp = DesignSystem.CriarBotaoHelp("Digite a marca do desenho na caixa acima e clique aqui.\n\nO programa vai buscar o desenho no Document Manager e selecionar no modelo 3D exatamente a pe??a-m??e que foi usada para gerar este desenho.");
+            var drawAction1 = DesignSystem.CriarLinhaComHelp(btnSelectFromDraw, btnSelectFromDrawHelp, 8);
+
+            var btnOpenDrawing = DesignSystem.CriarBotaoDashboard("Abrir desenho da peca modelo", false);
+            btnOpenDrawing.Click += delegate { 
+                var prev = Cursor.Current;
+                Cursor.Current = Cursors.WaitCursor;
+                try {
+                    DrawingModelLinker.OpenDrawingFromSelectedModelPart();
+                } finally { Cursor.Current = prev; }
+            };
+            var btnOpenDrawingHelp = DesignSystem.CriarBotaoHelp("Selecione um objeto 3D no modelo e clique aqui.\n\nO sistema vai buscar e abrir automaticamente o desenho do Document Manager que pertence ??quela posi????o.");
+            var drawAction2 = DesignSystem.CriarLinhaComHelp(btnOpenDrawing, btnOpenDrawingHelp, 8);
+
+            DesignSystem.AdicionarLinha(drawingsLayout, drawAction1);
+            DesignSystem.AdicionarLinha(drawingsLayout, drawAction2);
+
+            grpDrawings.Controls.Add(drawingsLayout);
+            DesignSystem.AdicionarLinha(dashboardLayout, grpDrawings);
 
             var grpActions = DesignSystem.CriarGrupoDashboard("Acoes do modelo");
             var actionsLayout = DesignSystem.CriarLayoutVertical();
@@ -2106,17 +2177,183 @@ internal static class WeightSummary
 }
 
 
+internal static class MaterialSummary
+    {
+        public static string BuildMaterialReport(bool onlySelected)
+        {
+            Model model = ModelHelper.GetConnectedModel();
+            if (model == null) return null;
+
+            ModelObjectEnumerator enumerator;
+            if (onlySelected)
+            {
+                var uiSelector = new ModelUI.ModelObjectSelector();
+                enumerator = uiSelector.GetSelectedObjects();
+                if (enumerator == null || enumerator.GetSize() == 0)
+                {
+                    MessageBox.Show("Nenhuma peca selecionada.", "Resumo de Materiais", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return null;
+                }
+            }
+            else
+            {
+                enumerator = model.GetModelObjectSelector().GetAllObjectsWithType(ModelObject.ModelObjectEnum.UNKNOWN);
+                if (enumerator == null) return null;
+            }
+
+            var matProfileQuantities = new Dictionary<string, Dictionary<string, int>>(StringComparer.OrdinalIgnoreCase);
+            var matProfileWeights = new Dictionary<string, Dictionary<string, double>>(StringComparer.OrdinalIgnoreCase);
+
+            var previousCursor = Cursor.Current;
+            Cursor.Current = Cursors.WaitCursor;
+            int totalParts = 0;
+
+            try
+            {
+                int processed = 0;
+                while (enumerator.MoveNext())
+                {
+                    processed++;
+                    if (processed % 1000 == 0) Application.DoEvents();
+
+                    ModelObject obj = enumerator.Current as ModelObject;
+                    if (obj == null) continue;
+
+                    // Se a selecao retornou Assembly, extrair as parts internas
+                    Assembly assembly = obj as Assembly;
+                    if (assembly != null)
+                    {
+                        ArrayList secondaries = assembly.GetSecondaries();
+                        ProcessPart(assembly.GetMainPart() as Part, matProfileQuantities, matProfileWeights, ref totalParts);
+                        if (secondaries != null)
+                        {
+                            foreach (ModelObject sec in secondaries)
+                            {
+                                ProcessPart(sec as Part, matProfileQuantities, matProfileWeights, ref totalParts);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Part part = obj as Part;
+                        if (part != null)
+                        {
+                            ProcessPart(part, matProfileQuantities, matProfileWeights, ref totalParts);
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                Cursor.Current = previousCursor;
+            }
+
+            if (totalParts == 0)
+            {
+                MessageBox.Show("Nenhuma peca encontrada.", "Resumo de Materiais", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return null;
+            }
+
+            return FormatReport(matProfileQuantities, matProfileWeights, totalParts, onlySelected);
+        }
+
+        private static void ProcessPart(Part part, 
+            Dictionary<string, Dictionary<string, int>> matProfileQuantities, 
+            Dictionary<string, Dictionary<string, double>> matProfileWeights,
+            ref int totalParts)
+        {
+            if (part == null) return;
+
+            string material = part.Material.MaterialString;
+            string profile = part.Profile.ProfileString;
+            if (string.IsNullOrWhiteSpace(material)) material = "INDEFINIDO";
+            if (string.IsNullOrWhiteSpace(profile)) profile = "INDEFINIDO";
+
+            double weight = 0.0;
+            part.GetReportProperty("WEIGHT_NET", ref weight);
+
+            if (!matProfileQuantities.ContainsKey(material))
+            {
+                matProfileQuantities[material] = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+                matProfileWeights[material] = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+            }
+
+            var pDict = matProfileQuantities[material];
+            if (!pDict.ContainsKey(profile)) pDict[profile] = 0;
+            pDict[profile]++;
+
+            var wDict = matProfileWeights[material];
+            if (!wDict.ContainsKey(profile)) wDict[profile] = 0;
+            wDict[profile] += weight;
+
+            totalParts++;
+        }
+
+        private static string FormatReport(
+            Dictionary<string, Dictionary<string, int>> matProfileQuantities,
+            Dictionary<string, Dictionary<string, double>> matProfileWeights,
+            int totalParts,
+            bool onlySelected)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine("=== RESUMO DE MATERIAIS ===");
+            sb.AppendLine(string.Format("Data: {0}", DateTime.Now.ToString("yyyy-MM-dd HH:mm")));
+            sb.AppendLine(string.Format("Modalidade: {0}", onlySelected ? "Pecas selecionadas" : "Modelo inteiro"));
+            sb.AppendLine(string.Format("Total de pecas avaliadas: {0}", totalParts));
+            sb.AppendLine();
+
+            var sortedMaterials = new List<string>(matProfileQuantities.Keys);
+            sortedMaterials.Sort(StringComparer.OrdinalIgnoreCase);
+
+            double totalWeightAll = 0.0;
+
+            foreach (string material in sortedMaterials)
+            {
+                sb.AppendLine(string.Format("Material: {0}", material));
+                
+                var pDict = matProfileQuantities[material];
+                var wDict = matProfileWeights[material];
+
+                var sortedProfiles = new List<string>(pDict.Keys);
+                sortedProfiles.Sort(StringComparer.OrdinalIgnoreCase);
+
+                int subtotalQuant = 0;
+                double subtotalWeight = 0.0;
+
+                foreach (string profile in sortedProfiles)
+                {
+                    int q = pDict[profile];
+                    double w = wDict[profile];
+                    subtotalQuant += q;
+                    subtotalWeight += w;
+
+                    sb.AppendLine(string.Format("  {0,-15} | {1,5} p??s | {2,10:N1} kg", profile, q, w));
+                }
+
+                sb.AppendLine(string.Format("  Subtotal:       | {0,5} p??s | {1,10:N1} kg", subtotalQuant, subtotalWeight));
+                sb.AppendLine();
+
+                totalWeightAll += subtotalWeight;
+            }
+
+            sb.AppendLine("=== TOTAIS GERAIS ===");
+            sb.AppendLine(string.Format("Total de pecas: {0}", totalParts));
+            sb.AppendLine(string.Format("Peso Total    : {0:N1} kg", totalWeightAll));
+            
+            return sb.ToString();
+        }
+    }
+
+
 internal static class NumberingChecker
 {
-    // Ponto de entrada: extrai prefixos da selecao e verifica o modelo para esses prefixos
+    // Ponto de entrada: extrai prefixos da selecao (todos os niveis de assembly)
+    // e verifica as sequencias no modelo para esses prefixos.
     public static string CheckNumberingFromSelection()
     {
         Model model = ModelHelper.GetConnectedModel();
         if (model == null) return null;
 
-        // 1. Ler selecao e extrair prefixos unicos
-        //    Aceita Assembly selecionado diretamente (ferramenta conjunto)
-        //    ou Part selecionada (ferramenta objetos em componente / selecionar partes)
         ModelUI.ModelObjectSelector uiSelector = new ModelUI.ModelObjectSelector();
         ModelObjectEnumerator enumSelected = uiSelector.GetSelectedObjects();
         if (enumSelected == null)
@@ -2125,6 +2362,8 @@ internal static class NumberingChecker
             return null;
         }
 
+        // 1. Extrair prefixos de TODOS os niveis de assembly dos objetos selecionados
+        //    Sobe a hierarquia: Part -> SubConjunto -> Conjunto principal
         var targetPrefixes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         while (enumSelected.MoveNext())
@@ -2132,33 +2371,49 @@ internal static class NumberingChecker
             ModelObject obj = enumSelected.Current as ModelObject;
             if (obj == null) continue;
 
-            // Tentar obter o Assembly: direto ou via Part pai
-            Assembly assembly = obj as Assembly;
-            if (assembly == null)
+            // Resolver o Assembly mais proximo do objeto selecionado
+            Assembly startAssembly = obj as Assembly;
+            if (startAssembly == null)
             {
                 Part part = obj as Part;
                 if (part != null)
                 {
-                    assembly = part.GetAssembly() as Assembly;
+                    startAssembly = part.GetAssembly() as Assembly;
                 }
             }
 
-            if (assembly == null) continue;
+            if (startAssembly == null) continue;
 
-            string position = ModelHelper.GetReportProperty(assembly, "ASSEMBLY_POS");
-            if (string.IsNullOrWhiteSpace(position) || position == "-") continue;
-
-            string prefix;
-            int number;
-            if (DecomposePosition(position, out prefix, out number))
+            // Subir a hierarquia coletando o prefixo de cada nivel
+            Assembly cursor = startAssembly;
+            int safetyLimit = 10; // evitar loop infinito em hierarquias corrompidas
+            while (cursor != null && safetyLimit-- > 0)
             {
-                targetPrefixes.Add(prefix);
+                string prefix = ExtractPrefixDirect(cursor);
+                if (!string.IsNullOrWhiteSpace(prefix))
+                {
+                    targetPrefixes.Add(prefix);
+                }
+
+                // Subir para o assembly pai
+                Assembly parent = null;
+                try { parent = cursor.GetAssembly() as Assembly; }
+                catch { }
+                // Evitar loop se o pai for o proprio objeto
+                if (parent != null && parent.Identifier != null && cursor.Identifier != null
+                    && parent.Identifier.ID == cursor.Identifier.ID)
+                {
+                    break;
+                }
+                cursor = parent;
             }
         }
 
         if (targetPrefixes.Count == 0)
         {
-            MessageBox.Show("Nenhum prefixo identificado nas pecas selecionadas.\nVerifique se as pecas possuem posicao de conjunto definida.", "Verificar Numeracao", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            MessageBox.Show(
+                "Nenhum prefixo identificado nas pecas selecionadas.\nVerifique se as pecas possuem posicao de conjunto definida.",
+                "Verificar Numeracao", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return null;
         }
 
@@ -2166,12 +2421,12 @@ internal static class NumberingChecker
         prefixList.Sort(StringComparer.OrdinalIgnoreCase);
         string prefixDisplay = string.Join(", ", prefixList.ToArray());
 
-        // 2. Para cada prefixo, consultar o modelo via filtro STARTS_WITH (muito mais rapido)
-        //    Em vez de varrer todos os assemblies, usa a API de filtro do Tekla
+        // 2. Para cada prefixo, consultar o modelo via filtro STARTS_WITH
+        //    Funciona para conjuntos principais E subconjuntos (ambos sao Assembly no Tekla)
         var prefixUniqueNumbers = new Dictionary<string, SortedSet<int>>(StringComparer.OrdinalIgnoreCase);
-        var prefixTotalCount   = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-        var emptyPositionIds   = new List<long>();
-        int totalAssemblies    = 0;
+        var prefixTotalCount    = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        var emptyPositionIds    = new List<long>();
+        int totalAssemblies     = 0;
 
         ModelObjectSelector modelSelector = model.GetModelObjectSelector();
 
@@ -2192,27 +2447,19 @@ internal static class NumberingChecker
                     Assembly assembly = enumFiltered.Current as Assembly;
                     if (assembly == null) continue;
 
-                    long id = assembly.Identifier != null ? assembly.Identifier.ID : 0;
-                    string position = ModelHelper.GetReportProperty(assembly, "ASSEMBLY_POS");
-
-                    if (string.IsNullOrWhiteSpace(position) || position == "-")
-                    {
-                        emptyPositionIds.Add(id);
-                        continue;
-                    }
-
+                    // Ler prefix e numero direto do AssemblyNumber (mais confiavel que ASSEMBLY_POS)
                     string foundPrefix;
                     int number;
-                    if (!DecomposePosition(position, out foundPrefix, out number)) continue;
+                    if (!ExtractPrefixAndNumber(assembly, out foundPrefix, out number)) continue;
 
-                    // O filtro STARTS_WITH pode retornar "PPP1" quando busca "PP" - checar prefixo exato
+                    // STARTS_WITH pode retornar "PPP1" ao buscar "PP" - checar prefixo exato
                     if (!string.Equals(foundPrefix, prefix, StringComparison.OrdinalIgnoreCase)) continue;
 
                     totalAssemblies++;
 
-                    int current;
-                    prefixTotalCount.TryGetValue(prefix, out current);
-                    prefixTotalCount[prefix] = current + 1;
+                    int currentCount;
+                    prefixTotalCount.TryGetValue(prefix, out currentCount);
+                    prefixTotalCount[prefix] = currentCount + 1;
 
                     SortedSet<int> uniqueNums;
                     if (!prefixUniqueNumbers.TryGetValue(prefix, out uniqueNums))
@@ -2224,7 +2471,7 @@ internal static class NumberingChecker
                 }
             }
 
-            // Busca separada de assemblies sem posicao (modelo inteiro - apenas uma vez)
+            // Assemblies sem posicao (busca separada no modelo inteiro)
             BinaryFilterExpressionCollection emptyFilter = BuildEmptyPositionFilter();
             if (emptyFilter != null)
             {
@@ -2255,7 +2502,42 @@ internal static class NumberingChecker
         return FormatReport(prefixDisplay, totalAssemblies, emptyPositionIds, prefixUniqueNumbers, prefixTotalCount, prefixList);
     }
 
-    // Filtro: ASSEMBLY cujo PositionNumber comeca com o prefixo dado
+    // Le o prefixo diretamente de AssemblyNumber.Prefix (sem depender de report property)
+    // Mais confiavel para subconjuntos que podem nao ter ASSEMBLY_POS calculado
+    private static string ExtractPrefixDirect(Assembly assembly)
+    {
+        if (assembly == null) return null;
+        try
+        {
+            var num = assembly.AssemblyNumber;
+            if (num == null) return null;
+            string prefix = num.Prefix;
+            return string.IsNullOrWhiteSpace(prefix) ? null : prefix.Trim();
+        }
+        catch { return null; }
+    }
+
+    // Le prefixo e numero diretamente de AssemblyNumber
+    private static bool ExtractPrefixAndNumber(Assembly assembly, out string prefix, out int number)
+    {
+        prefix = null;
+        number = 0;
+        if (assembly == null) return false;
+        try
+        {
+            var num = assembly.AssemblyNumber;
+            if (num == null) return false;
+            prefix = num.Prefix;
+            if (string.IsNullOrWhiteSpace(prefix)) return false;
+            prefix = prefix.Trim();
+            number = num.StartNumber;
+            return true;
+        }
+        catch { return false; }
+    }
+
+    // Filtro: ASSEMBLY cujo PositionNumber comeca com o prefixo
+    // Funciona tanto para conjuntos principais quanto subconjuntos
     private static BinaryFilterExpressionCollection BuildPrefixStartsWithFilter(string prefix)
     {
         if (string.IsNullOrWhiteSpace(prefix)) return null;
@@ -2277,7 +2559,7 @@ internal static class NumberingChecker
         return collection;
     }
 
-    // Filtro: ASSEMBLY cuja PositionNumber esta vazia
+    // Filtro: ASSEMBLY com posicao vazia
     private static BinaryFilterExpressionCollection BuildEmptyPositionFilter()
     {
         var collection = new BinaryFilterExpressionCollection();
@@ -2306,7 +2588,7 @@ internal static class NumberingChecker
         List<string> sortedPrefixes)
     {
         StringBuilder sb = new StringBuilder();
-        int gapCount  = 0;
+        int gapCount   = 0;
         int errorCount = 0;
 
         sb.AppendLine("=== VERIFICADOR DE NUMERACAO ===");
@@ -2315,7 +2597,7 @@ internal static class NumberingChecker
         sb.AppendLine(string.Format("Total de conjuntos encontrados: {0}", totalAssemblies));
         sb.AppendLine();
 
-        // 1. Sem posicao (modelo inteiro)
+        // 1. Sem posicao
         sb.AppendLine("--- Conjuntos sem posicao ---");
         if (emptyIds.Count == 0)
         {
@@ -2323,30 +2605,25 @@ internal static class NumberingChecker
         }
         else
         {
-            sb.AppendLine(string.Format("[X] {0} conjunto(s) sem posicao de conjunto:", emptyIds.Count));
+            sb.AppendLine(string.Format("[X] {0} conjunto(s) sem posicao:", emptyIds.Count));
             int showMax = Math.Min(emptyIds.Count, 15);
             for (int i = 0; i < showMax; i++)
-            {
                 sb.AppendLine(string.Format("    - ID: {0}", emptyIds[i]));
-            }
             if (emptyIds.Count > showMax)
-            {
                 sb.AppendLine(string.Format("    ... e mais {0} conjuntos.", emptyIds.Count - showMax));
-            }
             errorCount++;
         }
         sb.AppendLine();
 
         // 2. Gaps por prefixo
         sb.AppendLine("--- Gaps na sequencia de numeracao ---");
-        bool anyGap = false;
 
         foreach (string prefix in sortedPrefixes)
         {
             SortedSet<int> uniqueNums;
             if (!prefixUniqueNumbers.TryGetValue(prefix, out uniqueNums) || uniqueNums.Count == 0)
             {
-                sb.AppendLine(string.Format("[~] Serie \"{0}\": nenhum conjunto encontrado com esse prefixo.", prefix));
+                sb.AppendLine(string.Format("[~] Serie \"{0}\": nenhum conjunto encontrado.", prefix));
                 continue;
             }
 
@@ -2354,15 +2631,15 @@ internal static class NumberingChecker
             {
                 int only = 0;
                 foreach (int n in uniqueNums) { only = n; }
-                sb.AppendLine(string.Format("[OK] Serie \"{0}\": apenas 1 posicao ({0}{1}). Sem gaps.", prefix, only));
+                sb.AppendLine(string.Format("[OK] Serie \"{0}\": 1 posicao ({0}{1}). Sem gaps.", prefix, only));
                 continue;
             }
 
             int min = 0, max = 0;
-            bool first = true;
+            bool isFirst = true;
             foreach (int n in uniqueNums)
             {
-                if (first) { min = n; first = false; }
+                if (isFirst) { min = n; isFirst = false; }
                 max = n;
             }
 
@@ -2378,7 +2655,6 @@ internal static class NumberingChecker
 
             if (gaps.Count > 0)
             {
-                anyGap = true;
                 gapCount += gaps.Count;
                 sb.AppendLine(string.Format("[X] Serie \"{0}\": {1} posicao(oes) faltando (de {0}{2} a {0}{3}):",
                     prefix, gaps.Count, min, max));
@@ -2402,10 +2678,10 @@ internal static class NumberingChecker
             if (uniqueNums == null || uniqueNums.Count == 0) continue;
 
             int min = 0, max = 0;
-            bool first = true;
+            bool isFirst = true;
             foreach (int n in uniqueNums)
             {
-                if (first) { min = n; first = false; }
+                if (isFirst) { min = n; isFirst = false; }
                 max = n;
             }
 
@@ -2436,31 +2712,6 @@ internal static class NumberingChecker
         return sb.ToString();
     }
 
-    private static bool DecomposePosition(string position, out string prefix, out int number)
-    {
-        prefix = null;
-        number = 0;
-        if (string.IsNullOrWhiteSpace(position)) return false;
-
-        int splitIndex = -1;
-        for (int i = position.Length - 1; i >= 0; i--)
-        {
-            if (!char.IsDigit(position[i]))
-            {
-                splitIndex = i;
-                break;
-            }
-        }
-
-        if (splitIndex < 0 || splitIndex >= position.Length - 1) return false;
-
-        prefix  = position.Substring(0, splitIndex + 1).Trim();
-        string numPart = position.Substring(splitIndex + 1);
-        if (string.IsNullOrWhiteSpace(prefix)) return false;
-
-        return int.TryParse(numPart, out number);
-    }
-
     private static string JoinInts(List<int> values, int max)
     {
         StringBuilder sb = new StringBuilder();
@@ -2473,6 +2724,147 @@ internal static class NumberingChecker
         if (values.Count > max)
             sb.Append(string.Format(" ... (+{0} outros)", values.Count - max));
         return sb.ToString();
+    }
+}
+
+
+internal static class DrawingModelLinker
+{
+    // Selecionar no modelo a partir da marca digitada do desenho
+    public static void SelectModelPartFromDrawingMark(string mark)
+    {
+        if (string.IsNullOrWhiteSpace(mark))
+        {
+            MessageBox.Show("Por favor, digite o nome/marca do desenho.", "Caixa Vazia", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        mark = mark.Trim();
+        Tekla.Structures.Drawing.DrawingHandler drawingHandler = new Tekla.Structures.Drawing.DrawingHandler();
+        Tekla.Structures.Drawing.DrawingEnumerator drawings = drawingHandler.GetDrawings();
+        
+        bool found = false;
+        Model model = new Model();
+
+        while (drawings.MoveNext())
+        {
+            Tekla.Structures.Drawing.Drawing drawing = drawings.Current;
+            // Verifica tanto a marca quanto o titulo
+            if (drawing.Mark.Equals(mark, StringComparison.InvariantCultureIgnoreCase) || 
+                drawing.Name.Equals(mark, StringComparison.InvariantCultureIgnoreCase))
+            {
+                Identifier modelIdentifier = null;
+
+                Tekla.Structures.Drawing.AssemblyDrawing ad = drawing as Tekla.Structures.Drawing.AssemblyDrawing;
+                Tekla.Structures.Drawing.SinglePartDrawing sp = drawing as Tekla.Structures.Drawing.SinglePartDrawing;
+                Tekla.Structures.Drawing.CastUnitDrawing cu = drawing as Tekla.Structures.Drawing.CastUnitDrawing;
+
+                if (ad != null)
+                {
+                    modelIdentifier = ad.AssemblyIdentifier;
+                }
+                else if (sp != null)
+                {
+                    modelIdentifier = sp.PartIdentifier;
+                }
+                else if (cu != null)
+                {
+                    modelIdentifier = cu.CastUnitIdentifier;
+                }
+
+                if (modelIdentifier != null)
+                {
+                    ModelObject modelObj = model.SelectModelObject(modelIdentifier);
+                    if (modelObj != null)
+                    {
+                        var sel = new ModelUI.ModelObjectSelector();
+                        sel.Select(new ArrayList() { modelObj });
+
+                        // Destacar visualmente com prompt
+                        Tekla.Structures.Model.Operations.Operation.DisplayPrompt(string.Format("Desenho [{0}] -> Pe??a do modelo base selecionada!", drawing.Mark));
+                        
+                        // B??nus: Focar na pe??a via execu????o de macro (Zoom to Selected)
+                        Tekla.Structures.Model.Operations.Operation.RunMacro("ZoomToSelected");
+                        
+                        found = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (!found)
+        {
+            System.Windows.Forms.MessageBox.Show(string.Format("Desenho '{0}' n??o encontrado na lista de desenhos, ou pe??a base n??o existe mais no modelo.\n\nVerifique se o nome confere exatamente com o 'Mark' ou 'Name' do Document Manager.", mark), 
+                "N??o encontrado", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Information);
+        }
+    }
+
+    // Sele????o reversa: Abrir desenho a associado a partir de objeto selecionado no modelo
+    public static void OpenDrawingFromSelectedModelPart()
+    {
+        var sel = new ModelUI.ModelObjectSelector();
+        var selectedEnum = sel.GetSelectedObjects();
+        
+        if (selectedEnum.GetSize() == 0)
+        {
+             MessageBox.Show("Voc?? precisa selecionar um objeto no modelo 3D primeiro.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+             return;
+        }
+        
+        selectedEnum.MoveNext();
+        ModelObject selectedObj = selectedEnum.Current;
+        Model model = new Model();
+        
+        string targetMark = "";
+        
+        Assembly assem = selectedObj as Assembly;
+        Part p = selectedObj as Part;
+
+        if (assem != null)
+        {
+            targetMark = ModelHelper.GetReportProperty(assem, "ASSEMBLY_POS");
+        }
+        else if (p != null)
+        {
+            Assembly parentAssembly = p.GetAssembly();
+            if (parentAssembly != null)
+            {
+                targetMark = ModelHelper.GetReportProperty(parentAssembly, "ASSEMBLY_POS");
+            }
+            else
+            {
+                targetMark = ModelHelper.GetReportProperty(p, "PART_POS");
+            }
+        }
+
+        if (string.IsNullOrEmpty(targetMark) || targetMark == "-") 
+        {
+            MessageBox.Show("N??o foi poss??vel determinar a marca (posi????o) do objeto selecionado.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        Tekla.Structures.Drawing.DrawingHandler drawingHandler = new Tekla.Structures.Drawing.DrawingHandler();
+        Tekla.Structures.Drawing.DrawingEnumerator drawings = drawingHandler.GetDrawings();
+        bool found = false;
+        
+        while(drawings.MoveNext())
+        {
+            Tekla.Structures.Drawing.Drawing drawing = drawings.Current;
+            // No Tekla, desenhos de pe??as identicas recebem o mesmo Drawing.Mark da posi????o
+            if (drawing.Mark.Equals(targetMark, StringComparison.InvariantCultureIgnoreCase))
+            {
+                // Abre o desenho
+                drawingHandler.SetActiveDrawing(drawing, true);
+                found = true;
+                break;
+            }
+        }
+
+        if(!found)
+        {
+             System.Windows.Forms.MessageBox.Show(string.Format("Nenhum desenho encontrado para a posi????o '{0}' no Document Manager.\n\nProvavelmente o desenho ainda n??o foi criado.", targetMark), "N??o encontrado", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Information);
+        }
     }
 }
 

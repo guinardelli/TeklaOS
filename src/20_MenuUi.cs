@@ -100,8 +100,37 @@ internal static class MenuUi
                 finally { Cursor.Current = prev; }
             };
 
+            var btnMaterialAll = DesignSystem.CriarBotaoDashboard("Resumo de materiais (modelo inteiro)", false);
+            btnMaterialAll.Click += delegate {
+                var prev = Cursor.Current;
+                Cursor.Current = Cursors.WaitCursor;
+                try
+                {
+                    string r = MaterialSummary.BuildMaterialReport(false);
+                    if (!string.IsNullOrEmpty(r)) ReportWindow.ShowReport(r, "Resumo de Materiais (Modelo)");
+                }
+                finally { Cursor.Current = prev; }
+            };
+
+            var btnMaterialSel = DesignSystem.CriarBotaoDashboard("Resumo de materiais (selecao)", false);
+            btnMaterialSel.Click += delegate {
+                var prev = Cursor.Current;
+                Cursor.Current = Cursors.WaitCursor;
+                try
+                {
+                    string r = MaterialSummary.BuildMaterialReport(true);
+                    if (!string.IsNullOrEmpty(r)) ReportWindow.ShowReport(r, "Resumo de Materiais (Selecao)");
+                }
+                finally { Cursor.Current = prev; }
+            };
+
+            var btnMaterialHelp = DesignSystem.CriarBotaoHelp("Gera um resumo da quantidade de pecas e pesos agrupados por material e perfil. Ideal para orcamento e compras.");
+            var materialActions = DesignSystem.CriarLinhaComHelp(btnMaterialSel, btnMaterialHelp, 8);
+
             DesignSystem.AdicionarLinha(reportsLayout, btnGeral);
             DesignSystem.AdicionarLinha(reportsLayout, btnSel);
+            DesignSystem.AdicionarLinha(reportsLayout, btnMaterialAll);
+            DesignSystem.AdicionarLinha(reportsLayout, materialActions);
             grpReports.Controls.Add(reportsLayout);
             DesignSystem.AdicionarLinha(dashboardLayout, grpReports);
 
@@ -129,6 +158,48 @@ internal static class MenuUi
             DesignSystem.AdicionarLinha(selectionLayout, selectionActions);
             grpSelection.Controls.Add(selectionLayout);
             DesignSystem.AdicionarLinha(dashboardLayout, grpSelection);
+
+            // --- Grupo: Desenhos ---
+            var grpDrawings = DesignSystem.CriarGrupoDashboard("Vinculo Modelo e Desenho");
+            var drawingsLayout = DesignSystem.CriarLayoutVertical();
+
+            DesignSystem.AdicionarLinha(drawingsLayout, DesignSystem.CriarLabelInfo("Marca ou nome do desenho (ex: PP1):"));
+            var txtDrawingMark = new TextBox();
+            txtDrawingMark.Multiline = false;
+            txtDrawingMark.Dock = DockStyle.Fill;
+            txtDrawingMark.Height = 28;
+            txtDrawingMark.Font = DesignSystem.F_Texto;
+            txtDrawingMark.Margin = new Padding(0, 0, 0, 8);
+            txtDrawingMark.BackColor = DesignSystem.C_CardFundo;
+            DesignSystem.AdicionarLinha(drawingsLayout, txtDrawingMark);
+
+            var btnSelectFromDraw = DesignSystem.CriarBotaoDashboard("Selecionar peca base do modelo", false);
+            btnSelectFromDraw.Click += delegate { 
+                var prev = Cursor.Current;
+                Cursor.Current = Cursors.WaitCursor;
+                try {
+                    DrawingModelLinker.SelectModelPartFromDrawingMark(txtDrawingMark.Text); 
+                } finally { Cursor.Current = prev; }
+            };
+            var btnSelectFromDrawHelp = DesignSystem.CriarBotaoHelp("Digite a marca do desenho na caixa acima e clique aqui.\n\nO programa vai buscar o desenho no Document Manager e selecionar no modelo 3D exatamente a peça-mãe que foi usada para gerar este desenho.");
+            var drawAction1 = DesignSystem.CriarLinhaComHelp(btnSelectFromDraw, btnSelectFromDrawHelp, 8);
+
+            var btnOpenDrawing = DesignSystem.CriarBotaoDashboard("Abrir desenho da peca modelo", false);
+            btnOpenDrawing.Click += delegate { 
+                var prev = Cursor.Current;
+                Cursor.Current = Cursors.WaitCursor;
+                try {
+                    DrawingModelLinker.OpenDrawingFromSelectedModelPart();
+                } finally { Cursor.Current = prev; }
+            };
+            var btnOpenDrawingHelp = DesignSystem.CriarBotaoHelp("Selecione um objeto 3D no modelo e clique aqui.\n\nO sistema vai buscar e abrir automaticamente o desenho do Document Manager que pertence àquela posição.");
+            var drawAction2 = DesignSystem.CriarLinhaComHelp(btnOpenDrawing, btnOpenDrawingHelp, 8);
+
+            DesignSystem.AdicionarLinha(drawingsLayout, drawAction1);
+            DesignSystem.AdicionarLinha(drawingsLayout, drawAction2);
+
+            grpDrawings.Controls.Add(drawingsLayout);
+            DesignSystem.AdicionarLinha(dashboardLayout, grpDrawings);
 
             var grpActions = DesignSystem.CriarGrupoDashboard("Acoes do modelo");
             var actionsLayout = DesignSystem.CriarLayoutVertical();
