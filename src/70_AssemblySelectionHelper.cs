@@ -10,14 +10,10 @@ internal static class AssemblySelectionHelper
             return;
         }
 
-        var model = new Model();
-        if (!model.GetConnectionStatus())
-        {
-            MessageBox.Show("Nao foi possivel conectar ao modelo. Abra um modelo e tente novamente.");
-            return;
-        }
+        var model = ModelHelper.GetConnectedModel();
+        if (model == null) return;
 
-        var tokens = input.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+        var tokens = input.Split(new[] { ',', '\n', '\r', '\t', ';' }, StringSplitOptions.RemoveEmptyEntries);
         var requestedMapping = new System.Collections.Generic.Dictionary<string, string>(Comparer);
         var requestedOrder = new System.Collections.Generic.List<string>();
 
@@ -57,6 +53,12 @@ internal static class AssemblySelectionHelper
 
         if (missingNormalized.Count > 0)
         {
+            var result = MessageBox.Show("Alguns conjuntos (" + missingNormalized.Count + ") não foram achados pelas pesquisas rápidas. Deseja realizar uma varredura profunda no modelo todo? \n(Isso pode travar por vários minutos).", "Pesquisa Profunda", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+            if (result != DialogResult.Yes)
+            {
+                return;
+            }
+
             var enumerator = model.GetModelObjectSelector().GetAllObjectsWithType(ModelObject.ModelObjectEnum.ASSEMBLY);
             if (enumerator == null)
             {
@@ -186,41 +188,11 @@ internal static class AssemblySelectionHelper
     {
         foreach (var propertyName in new[] { "POSITION", "ASSEMBLY_POSITION", "ASSEMBLY_POS", "POSITION_NAME", "ASSEMBLY_NUMBER", "POSITION_ID" })
         {
-            var reportValue = TryGetReportProperty(assembly, propertyName);
-            if (!string.IsNullOrWhiteSpace(reportValue))
+            var reportValue = ModelHelper.GetReportProperty(assembly, propertyName);
+            if (!string.IsNullOrWhiteSpace(reportValue) && reportValue != "-")
             {
                 yield return reportValue;
             }
-        }
-    }
-
-    private static string TryGetReportProperty(Assembly assembly, string propertyName)
-    {
-        try
-        {
-            string stringValue = null;
-            if (assembly.GetReportProperty(propertyName, ref stringValue) && !string.IsNullOrWhiteSpace(stringValue))
-            {
-                return stringValue;
-            }
-
-            double doubleValue = 0;
-            if (assembly.GetReportProperty(propertyName, ref doubleValue))
-            {
-                return doubleValue.ToString();
-            }
-
-            int intValue = 0;
-            if (assembly.GetReportProperty(propertyName, ref intValue))
-            {
-                return intValue.ToString();
-            }
-
-            return null;
-        }
-        catch
-        {
-            return null;
         }
     }
 

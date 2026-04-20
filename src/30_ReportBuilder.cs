@@ -2,12 +2,8 @@ internal static class ReportBuilder
 {
     public static string BuildReport()
     {
-        var model = new Model();
-        if (!model.GetConnectionStatus())
-        {
-            MessageBox.Show("Relatorio do Modelo\n\nNao foi possivel conectar ao modelo Tekla. Abra um modelo e tente novamente.");
-            return null;
-        }
+        var model = ModelHelper.GetConnectedModel();
+        if (model == null) return null;
 
         var info = model.GetInfo();
         var projectInfo = model.GetProjectInfo();
@@ -55,12 +51,8 @@ internal static class ReportBuilder
 
     public static string BuildSelectedPartsReport()
     {
-        var model = new Model();
-        if (!model.GetConnectionStatus())
-        {
-            MessageBox.Show("Relatorio do Modelo\n\nNao foi possivel conectar ao modelo Tekla. Abra um modelo e tente novamente.");
-            return null;
-        }
+        var model = ModelHelper.GetConnectedModel();
+        if (model == null) return null;
 
         var selector = new ModelUI.ModelObjectSelector();
         var selected = selector.GetSelectedObjects();

@@ -1,15 +1,12 @@
 internal static class AssemblyComparator
 {
     private const bool IncludeOkDetails = true;
+    private const double NumericTolerance = 0.005;
 
     public static void CompareSelectedAssemblies()
     {
-        Model model = new Model();
-        if (!model.GetConnectionStatus())
-        {
-            MessageBox.Show("Nao foi possivel conectar ao modelo Tekla. Abra um modelo e tente novamente.");
-            return;
-        }
+        Model model = ModelHelper.GetConnectedModel();
+        if (model == null) return;
 
         ModelUI.ModelObjectSelector uiSelector = new ModelUI.ModelObjectSelector();
         ModelObjectEnumerator enumSelected = uiSelector.GetSelectedObjects();
@@ -38,52 +35,102 @@ internal static class AssemblyComparator
         Assembly ass1 = (Assembly)assemblies[0];
         Assembly ass2 = (Assembly)assemblies[1];
 
-        StringBuilder sb = new StringBuilder();
-        AppendAssemblyComparison(sb, ass1, ass2, model);
+        if (ass1.Identifier.ID == ass2.Identifier.ID)
+        {
+            MessageBox.Show("Você selecionou a mesma peça duas vezes. Selecione duas peças diferentes para comparar.");
+            return;
+        }
 
-        ReportWindow.ShowReport(sb.ToString());
+        StringBuilder sb = new StringBuilder();
+        int totalOk;
+        int totalDiff;
+        AppendAssemblyComparison(sb, ass1, ass2, model, out totalOk, out totalDiff);
+
+        ReportWindow.ShowReport(sb.ToString(), "Comparacao de Conjuntos");
     }
 
-    private static void AppendAssemblyComparison(StringBuilder sb, Assembly ass1, Assembly ass2, Model model)
+    private static void AppendAssemblyComparison(StringBuilder sb, Assembly ass1, Assembly ass2, Model model, out int totalOk, out int totalDiff)
     {
-        sb.AppendLine("RESULTADO COMPARADOR (NUMERACAO)");
-        sb.AppendLine("Conjunto 1: " + Formatters.FormatValue(ass1.Name));
-        sb.AppendLine("Conjunto 2: " + Formatters.FormatValue(ass2.Name));
+        totalOk = 0;
+        totalDiff = 0;
+
+        string pos1 = ModelHelper.GetReportProperty(ass1, "ASSEMBLY_POS");
+        string pos2 = ModelHelper.GetReportProperty(ass2, "ASSEMBLY_POS");
+
+        sb.AppendLine("=== COMPARADOR DE CONJUNTOS ===");
+        sb.AppendLine();
+        sb.AppendLine(string.Format("Conjunto 1: {0} (Pos: {1})", Formatters.FormatValue(ass1.Name), pos1));
+        sb.AppendLine(string.Format("Conjunto 2: {0} (Pos: {1})", Formatters.FormatValue(ass2.Name), pos2));
+        sb.AppendLine(string.Format("Data: {0}", DateTime.Now.ToString("yyyy-MM-dd HH:mm")));
         sb.AppendLine();
 
-        sb.AppendLine("SERIE DE NUMERACAO:");
-        bool seriesEqual = AppendNumberingSeriesComparison(sb, ass1, ass2);
+        sb.AppendLine("=== SERIE DE NUMERACAO ===");
+        int secOk;
+        int secDiff;
+        bool seriesEqual = AppendNumberingSeriesComparison(sb, ass1, ass2, out secOk, out secDiff);
+        totalOk += secOk;
+        totalDiff += secDiff;
         sb.AppendLine();
 
         if (!seriesEqual)
         {
-            sb.AppendLine("Comparacao interrompida: series diferentes.");
+            sb.AppendLine("[X] Comparacao interrompida: series de numeracao diferentes.");
             sb.AppendLine();
+            AppendVerdict(sb, totalOk, totalDiff);
             return;
         }
 
-        sb.AppendLine("PECA PRINCIPAL:");
-        AppendMainPartComparison(sb, ass1, ass2);
+        sb.AppendLine("=== PECA PRINCIPAL ===");
+        AppendMainPartComparison(sb, ass1, ass2, out secOk, out secDiff);
+        totalOk += secOk;
+        totalDiff += secDiff;
         sb.AppendLine();
 
-        sb.AppendLine("SECUNDARIAS:");
-        AppendSecondariesComparison(sb, ass1, ass2, model);
+        sb.AppendLine("=== SECUNDARIAS ===");
+        AppendSecondariesComparison(sb, ass1, ass2, model, out secOk, out secDiff);
+        totalOk += secOk;
+        totalDiff += secDiff;
         sb.AppendLine();
 
-        sb.AppendLine("PROPRIEDADES DO CONJUNTO:");
-        AppendAssemblyPropertiesComparison(sb, ass1, ass2);
+        sb.AppendLine("=== PROPRIEDADES DO CONJUNTO ===");
+        AppendAssemblyPropertiesComparison(sb, ass1, ass2, out secOk, out secDiff);
+        totalOk += secOk;
+        totalDiff += secDiff;
         sb.AppendLine();
+
+        AppendVerdict(sb, totalOk, totalDiff);
     }
 
-    private static bool AppendNumberingSeriesComparison(StringBuilder sb, Assembly ass1, Assembly ass2)
+    private static void AppendVerdict(StringBuilder sb, int okCount, int diffCount)
     {
+        sb.AppendLine("=== RESUMO ===");
+        sb.AppendLine(string.Format("Verificacoes: {0} total", okCount + diffCount));
+        sb.AppendLine(string.Format("[OK] Iguais: {0}", okCount));
+        if (diffCount > 0)
+        {
+            sb.AppendLine(string.Format("[X] Diferentes: {0}", diffCount));
+        }
+        sb.AppendLine();
+
+        if (diffCount == 0)
+        {
+            sb.AppendLine(">>> APROVADO - Conjuntos equivalentes. <<<");
+        }
+        else
+        {
+            sb.AppendLine(string.Format(">>> REPROVADO - {0} diferenca(s) encontrada(s). <<<", diffCount));
+        }
+    }
+
+    private static bool AppendNumberingSeriesComparison(StringBuilder sb, Assembly ass1, Assembly ass2, out int okCount, out int diffCount)
+    {
+        okCount = 0;
+        diffCount = 0;
+
         string prefix1 = GetAssemblyNumberPrefix(ass1);
         string prefix2 = GetAssemblyNumberPrefix(ass2);
         string start1 = GetAssemblyNumberStart(ass1);
         string start2 = GetAssemblyNumberStart(ass2);
-
-        int okCount = 0;
-        int diffCount = 0;
 
         if (AppendCompareLine(sb, "Prefixo", prefix1, prefix2))
         {
@@ -108,21 +155,22 @@ internal static class AssemblyComparator
         return diffCount == 0;
     }
 
-    private static void AppendMainPartComparison(StringBuilder sb, Assembly ass1, Assembly ass2)
+    private static void AppendMainPartComparison(StringBuilder sb, Assembly ass1, Assembly ass2, out int okCount, out int diffCount)
     {
+        okCount = 0;
+        diffCount = 0;
+
         Part main1 = ass1.GetMainPart() as Part;
         Part main2 = ass2.GetMainPart() as Part;
 
         if (main1 == null || main2 == null)
         {
             sb.AppendLine("[X] Peca principal: nao encontrada em um dos conjuntos.");
+            diffCount++;
             return;
         }
 
-        int okCount = 0;
-        int diffCount = 0;
-
-        if (AppendCompareLine(sb, "Perfil", GetReportProperty(main1, "PROFILE"), GetReportProperty(main2, "PROFILE")))
+        if (AppendCompareLine(sb, "Perfil", ModelHelper.GetReportProperty(main1, "PROFILE"), ModelHelper.GetReportProperty(main2, "PROFILE")))
         {
             okCount++;
         }
@@ -131,7 +179,7 @@ internal static class AssemblyComparator
             diffCount++;
         }
 
-        if (AppendCompareLine(sb, "Material", GetReportProperty(main1, "MATERIAL"), GetReportProperty(main2, "MATERIAL")))
+        if (AppendCompareLine(sb, "Material", ModelHelper.GetReportProperty(main1, "MATERIAL"), ModelHelper.GetReportProperty(main2, "MATERIAL")))
         {
             okCount++;
         }
@@ -149,7 +197,7 @@ internal static class AssemblyComparator
             diffCount++;
         }
 
-        if (AppendCompareLine(sb, "Deformacao", GetReportProperty(main1, "DEFORMATION"), GetReportProperty(main2, "DEFORMATION")))
+        if (AppendCompareLine(sb, "Deformacao", ModelHelper.GetReportProperty(main1, "DEFORMATION"), ModelHelper.GetReportProperty(main2, "DEFORMATION")))
         {
             okCount++;
         }
@@ -176,18 +224,40 @@ internal static class AssemblyComparator
             diffCount++;
         }
 
+        string partPrefix1 = GetPartNumberPrefix(main1);
+        string partPrefix2 = GetPartNumberPrefix(main2);
+        if (AppendCompareLine(sb, "Num. Peca Prefixo", partPrefix1, partPrefix2))
+        {
+            okCount++;
+        }
+        else
+        {
+            diffCount++;
+        }
+
+        string partStart1 = GetPartNumberStart(main1);
+        string partStart2 = GetPartNumberStart(main2);
+        if (AppendCompareLine(sb, "Num. Peca StartNumber", partStart1, partStart2))
+        {
+            okCount++;
+        }
+        else
+        {
+            diffCount++;
+        }
+
         AppendSectionSummary(sb, okCount, diffCount);
     }
 
-    private static void AppendSecondariesComparison(StringBuilder sb, Assembly ass1, Assembly ass2, Model model)
+    private static void AppendSecondariesComparison(StringBuilder sb, Assembly ass1, Assembly ass2, Model model, out int okCount, out int diffCount)
     {
+        okCount = 0;
+        diffCount = 0;
+
         int count1;
         int count2;
         Dictionary<string, int> map1 = BuildSecondarySignatureCounts(ass1, model, out count1);
         Dictionary<string, int> map2 = BuildSecondarySignatureCounts(ass2, model, out count2);
-
-        int okCount = 0;
-        int diffCount = 0;
 
         if (AppendCompareLine(sb, "Quantidade", count1, count2))
         {
@@ -274,11 +344,13 @@ internal static class AssemblyComparator
 
     private static string BuildSecondarySignature(Part part)
     {
-        string profile = NormalizeKeyValue(GetReportProperty(part, "PROFILE"));
-        string material = NormalizeKeyValue(GetReportProperty(part, "MATERIAL"));
+        string profile = NormalizeKeyValue(ModelHelper.GetReportProperty(part, "PROFILE"));
+        string material = NormalizeKeyValue(ModelHelper.GetReportProperty(part, "MATERIAL"));
+        string finish = NormalizeKeyValue(GetPartFinish(part));
+        string partClass = NormalizeKeyValue(GetPartClass(part));
         Box box = GetLocalBoundingBox(part);
 
-        return string.Format("Perfil={0};Material={1};Box={2}", profile, material, FormatBox(box));
+        return string.Format("Perfil={0};Material={1};Acabamento={2};Classe={3};Box={4}", profile, material, finish, partClass, FormatBox(box));
     }
 
     private struct Box
@@ -296,9 +368,12 @@ internal static class AssemblyComparator
     private static Box GetLocalBoundingBox(Part part)
     {
         Solid solid = part.GetSolid();
-        Tekla.Structures.Geometry3d.Point min = solid.MinimumPoint;
-        Tekla.Structures.Geometry3d.Point max = solid.MaximumPoint;
-        return new Box(min, max);
+        if (solid == null || solid.MinimumPoint == null || solid.MaximumPoint == null)
+        {
+            var zero = new Tekla.Structures.Geometry3d.Point(0, 0, 0);
+            return new Box(zero, zero);
+        }
+        return new Box(solid.MinimumPoint, solid.MaximumPoint);
     }
 
     private static string FormatBox(Box box)
@@ -351,15 +426,36 @@ internal static class AssemblyComparator
 
             if (count1 > count2)
             {
-                lines.Add(string.Format("[X] Secundaria faltando no conjunto 2: {0} (x{1})", key, count1 - count2));
+                lines.Add(string.Format("[X] Secundaria faltando no conjunto 2 (x{0}):", count1 - count2));
+                AppendSignatureReadable(lines, key);
             }
             else if (count2 > count1)
             {
-                lines.Add(string.Format("[X] Secundaria extra no conjunto 2: {0} (x{1})", key, count2 - count1));
+                lines.Add(string.Format("[X] Secundaria extra no conjunto 2 (x{0}):", count2 - count1));
+                AppendSignatureReadable(lines, key);
             }
         }
 
         return lines;
+    }
+
+    private static void AppendSignatureReadable(List<string> lines, string signature)
+    {
+        string[] parts = signature.Split(';');
+        foreach (string part in parts)
+        {
+            int eqIndex = part.IndexOf('=');
+            if (eqIndex > 0)
+            {
+                string label = part.Substring(0, eqIndex).Trim();
+                string value = part.Substring(eqIndex + 1).Trim();
+                if (string.Equals(label, "Box", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+                lines.Add(string.Format("      {0}: {1}", label, value));
+            }
+        }
     }
 
     private static bool AppendStatusLine(StringBuilder sb, string label, bool ok)
@@ -392,6 +488,26 @@ internal static class AssemblyComparator
         }
 
         return ass.AssemblyNumber.StartNumber.ToString();
+    }
+
+    private static string GetPartNumberPrefix(Part part)
+    {
+        if (part == null || part.PartNumber == null)
+        {
+            return "-";
+        }
+
+        return Formatters.FormatValue(part.PartNumber.Prefix);
+    }
+
+    private static string GetPartNumberStart(Part part)
+    {
+        if (part == null || part.PartNumber == null)
+        {
+            return "-";
+        }
+
+        return part.PartNumber.StartNumber.ToString();
     }
 
     private static string GetPartFinish(Part part)
@@ -450,6 +566,55 @@ internal static class AssemblyComparator
         return ok;
     }
 
+    private static bool AppendCompareLineWithTolerance(StringBuilder sb, string label, string leftValue, string rightValue)
+    {
+        bool exactMatch = AreEqualNormalized(leftValue, rightValue);
+
+        if (exactMatch)
+        {
+            if (IncludeOkDetails)
+            {
+                sb.AppendLine(string.Format("[OK] {0}: {1} | {2}", label, leftValue, rightValue));
+            }
+            return true;
+        }
+
+        double leftNum;
+        double rightNum;
+        bool leftIsNum = double.TryParse(leftValue, out leftNum);
+        bool rightIsNum = double.TryParse(rightValue, out rightNum);
+
+        if (leftIsNum && rightIsNum)
+        {
+            bool withinTolerance = AreEqualWithTolerance(leftNum, rightNum);
+            if (withinTolerance)
+            {
+                sb.AppendLine(string.Format("[~] {0}: {1} | {2} (dentro da tolerancia)", label, leftValue, rightValue));
+                return true;
+            }
+        }
+
+        sb.AppendLine(string.Format("[X] {0}: {1} | {2}", label, leftValue, rightValue));
+        return false;
+    }
+
+    private static bool AreEqualWithTolerance(double a, double b)
+    {
+        if (Math.Abs(a - b) < 0.001)
+        {
+            return true;
+        }
+
+        double maxAbs = Math.Max(Math.Abs(a), Math.Abs(b));
+        if (maxAbs < 0.001)
+        {
+            return true;
+        }
+
+        double relDiff = Math.Abs(a - b) / maxAbs;
+        return relDiff <= NumericTolerance;
+    }
+
     private static void AppendSectionSummary(StringBuilder sb, int okCount, int diffCount)
     {
         if (IncludeOkDetails)
@@ -479,10 +644,10 @@ internal static class AssemblyComparator
         return string.Format("{0} pecas", count);
     }
 
-    private static void AppendAssemblyPropertiesComparison(StringBuilder sb, Assembly ass1, Assembly ass2)
+    private static void AppendAssemblyPropertiesComparison(StringBuilder sb, Assembly ass1, Assembly ass2, out int okCount, out int diffCount)
     {
-        int okCount = 0;
-        int diffCount = 0;
+        okCount = 0;
+        diffCount = 0;
 
         if (AppendAssemblyPropertyLine(sb, ass1, ass2, "AREA")) okCount++; else diffCount++;
         if (AppendAssemblyPropertyLine(sb, ass1, ass2, "ASSEMBLY_PREFIX")) okCount++; else diffCount++;
@@ -503,21 +668,21 @@ internal static class AssemblyComparator
     {
         string leftValue = GetAssemblyProperty(ass1, propertyName);
         string rightValue = GetAssemblyProperty(ass2, propertyName);
-        return AppendCompareLine(sb, propertyName, leftValue, rightValue);
+        return AppendCompareLineWithTolerance(sb, propertyName, leftValue, rightValue);
     }
 
     private static string GetAssemblyProperty(Assembly ass, string propertyName)
     {
-        string value = GetReportProperty(ass, propertyName);
+        string value = ModelHelper.GetReportProperty(ass, propertyName);
         if (value == "-")
         {
             if (string.Equals(propertyName, "LENGHT", StringComparison.OrdinalIgnoreCase))
             {
-                value = GetReportProperty(ass, "LENGTH");
+                value = ModelHelper.GetReportProperty(ass, "LENGTH");
             }
             else if (string.Equals(propertyName, "LENGHT_GROSS", StringComparison.OrdinalIgnoreCase))
             {
-                value = GetReportProperty(ass, "LENGTH_GROSS");
+                value = ModelHelper.GetReportProperty(ass, "LENGTH_GROSS");
             }
         }
 
@@ -546,27 +711,5 @@ internal static class AssemblyComparator
         }
 
         return string.Equals(left.Trim(), right.Trim(), StringComparison.OrdinalIgnoreCase);
-    }
-
-    private static string GetReportProperty(ModelObject obj, string propertyName)
-    {
-        if (obj == null)
-        {
-            return "-";
-        }
-
-        string stringValue = null;
-        if (obj.GetReportProperty(propertyName, ref stringValue))
-        {
-            return Formatters.FormatValue(stringValue);
-        }
-
-        double doubleValue = 0.0;
-        if (obj.GetReportProperty(propertyName, ref doubleValue))
-        {
-            return Formatters.FormatValue(string.Format("{0:F1}", doubleValue));
-        }
-
-        return "-";
     }
 }

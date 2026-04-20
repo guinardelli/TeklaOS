@@ -9,6 +9,7 @@ Este projeto contem uma macro para Tekla Structures 2023 e a estrutura de um pac
   - "Gerar relatorio": mostra informacoes do modelo e do projeto.
   - "Pecas selecionadas": mostra informacoes das pecas atualmente selecionadas.
   - "Selecionar pecas": digite os nomes dos conjuntos separados por virgula (ex.: PP1,PP2,VR1) e o sistema seleciona esses conjuntos diretamente no modelo.
+  - "Comparar conjuntos": selecione exatamente dois conjuntos no modelo para comparar numeracao, peca principal, peças secundárias e propriedades.
   - "Fechar": fecha o menu.
   - "Limpeza e correcao do modelo":
     - "Reparar modelo e banco de dados": aciona o comando nativo "Diagnosticar e corrigir -> Reparar Modelo".
@@ -50,11 +51,15 @@ Este projeto contem uma macro para Tekla Structures 2023 e a estrutura de um pac
 
 - `src/00_Header.cs`: pragmas e `using` do macro gerado.
 - `src/10_EntryPoint.cs`: entry point `Script.Run`.
+- `src/15_DesignSystem.cs`: cores, tipografia e helpers de design do UI.
 - `src/20_MenuUi.cs`: cria o menu com botoes e checkbox.
+- `src/25_ModelHelper.cs`: conexao segura com o modelo e propriedades de relatorio.
 - `src/30_ReportBuilder.cs`: monta relatorio do modelo e pecas selecionadas.
 - `src/40_ReportWindow.cs`: janela de relatorio (TextBox + copiar).
 - `src/50_TeklaCommands.cs`: dispara o comando de reparo no Tekla.
 - `src/60_Formatters.cs`: formatadores e helpers.
+- `src/70_AssemblySelectionHelper.cs`: selecao inteligente de conjuntos no Tekla.
+- `src/80_AssemblyComparator.cs`: validacao de series e pecas de conjuntos (comparador visual manual).
 - `scripts/build_macro.ps1`: gera `macros/MarnaTeklaOS.cs` e a copia do TSEP.
 
 ## Pastas importantes no projeto

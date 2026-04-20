@@ -83,12 +83,24 @@ public class Script
 - Estrutura minima de TSEP:
   ```
   RelatorioModelo/
-    Manifest.xml
-    Icon.png
-    Environments/
-      common/
-        macros/modeling/MarnaTeklaOS.cs
-        extensions/RelatorioModelo/RelatorioModelo_ComponentCatalog.ac.xml
+  ├── Manifest.xml
+  ├── Icon.png
+  ├── src/
+  │   ├── 00_Header.cs
+  │   ├── 10_EntryPoint.cs
+  │   ├── 15_DesignSystem.cs
+  │   ├── 20_MenuUi.cs
+  │   ├── 25_ModelHelper.cs
+  │   ├── 30_ReportBuilder.cs
+  │   ├── 40_ReportWindow.cs
+  │   ├── 50_TeklaCommands.cs
+  │   ├── 60_Formatters.cs
+  │   ├── 70_AssemblySelectionHelper.cs
+  │   └── 80_AssemblyComparator.cs
+  └── Environments/
+      └── common/
+          ├── macros/modeling/MarnaTeklaOS.cs
+          └── extensions/RelatorioModelo/RelatorioModelo_ComponentCatalog.ac.xml
   ```
 - No catalogo, a entrada de botao fica em `CatalogMacroModelingItem`.
 - `Product` no `Manifest` deve ser `Type="Extension"`.
