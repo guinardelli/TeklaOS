@@ -1,43 +1,60 @@
 internal static class DesignSystem
 {
-    // --- Paleta de Cores (Design System) ---
-    public static readonly Color C_FundoForm = Color.FromArgb(240, 242, 245);
-    public static readonly Color C_CardFundo = Color.White;
-    public static readonly Color C_Cabecalho = Color.FromArgb(0, 80, 150);
-    public static readonly Color C_TextoPrimario = Color.FromArgb(30, 30, 30);
-    public static readonly Color C_TextoSecundario = Color.FromArgb(100, 110, 120);
+    // --- Paleta Minimalista (Cinzas + Destaque unico) ---
+    public static readonly Color C_Fundo = Color.FromArgb(245, 245, 245);
+    public static readonly Color C_Superficie = Color.White;
+    public static readonly Color C_Cabecalho = Color.FromArgb(38, 38, 38);
+    public static readonly Color C_TextoPrimario = Color.FromArgb(26, 26, 26);
+    public static readonly Color C_TextoSecundario = Color.FromArgb(102, 102, 102);
     public static readonly Color C_TextoClaro = Color.White;
-    public static readonly Color C_TextoCabecalhoSec = Color.FromArgb(200, 220, 255);
-    public static readonly Color C_Borda = Color.FromArgb(220, 224, 230);
-    public static readonly Color C_Transparente = Color.Transparent;
+    public static readonly Color C_TextoDesabilitado = Color.FromArgb(160, 160, 160);
+    public static readonly Color C_Borda = Color.FromArgb(218, 218, 218);
+    public static readonly Color C_BordaLeve = Color.FromArgb(234, 234, 234);
+    public static readonly Color C_Hover = Color.FromArgb(240, 240, 240);
 
-    // Cores de Acao
-    public static readonly Color C_BotaoHover = Color.FromArgb(245, 248, 255);
-    public static readonly Color C_DestaqueAzul = Color.FromArgb(0, 120, 215);
-    public static readonly Color C_DestaqueVermelho = Color.FromArgb(220, 53, 69);
-    public static readonly Color C_FundoVermelhoSuave = Color.FromArgb(255, 245, 245);
-    public static readonly Color C_FundoVermelhoHover = Color.FromArgb(255, 230, 230);
+    // Destaque (unico tom de azul — usado para acoes primarias)
+    public static readonly Color C_Destaque = Color.FromArgb(37, 99, 235);
+    public static readonly Color C_DestaqueHover = Color.FromArgb(29, 78, 216);
+    public static readonly Color C_DestaqueSuave = Color.FromArgb(239, 246, 255);
+
+    // Semanticas (minimas)
+    public static readonly Color C_Sucesso = Color.FromArgb(22, 163, 74);
+    public static readonly Color C_Erro = Color.FromArgb(220, 38, 38);
+    public static readonly Color C_Atencao = Color.FromArgb(180, 130, 0);
 
     // Tipografia
-    public static readonly Font F_Titulo = new Font("Segoe UI", 12F, FontStyle.Bold);
-    public static readonly Font F_Texto = new Font("Segoe UI", 10F, FontStyle.Regular);
-    public static readonly Font F_Secao = new Font("Segoe UI", 10F, FontStyle.Bold);
+    public static readonly Font F_Titulo = new Font("Segoe UI Semibold", 11F, FontStyle.Bold);
+    public static readonly Font F_Secao = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold);
+    public static readonly Font F_Texto = new Font("Segoe UI", 9.5F, FontStyle.Regular);
+    public static readonly Font F_TextoPequeno = new Font("Segoe UI", 8.5F, FontStyle.Regular);
+    public static readonly Font F_Botao = new Font("Segoe UI Semibold", 9F, FontStyle.Bold);
     public static readonly Font F_Mono = new Font("Consolas", 9F);
 
     // --- Helpers UI ---
-    public static GroupBox CriarGrupoDashboard(string titulo)
+
+    public static Label CriarRotuloSecao(string texto)
     {
-        var group = new GroupBox();
-        group.Text = titulo;
-        group.Font = F_Secao;
-        group.ForeColor = C_TextoPrimario;
-        group.BackColor = C_CardFundo;
-        group.Dock = DockStyle.Top;
-        group.AutoSize = true;
-        group.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-        group.Padding = new Padding(12, 8, 12, 12);
-        group.Margin = new Padding(0, 0, 0, 12);
-        return group;
+        var label = new Label();
+        label.Text = texto.ToUpperInvariant();
+        label.Font = F_TextoPequeno;
+        label.ForeColor = C_TextoSecundario;
+        label.AutoSize = false;
+        label.Dock = DockStyle.Top;
+        label.Height = 28;
+        label.TextAlign = ContentAlignment.BottomLeft;
+        label.Padding = new Padding(2, 0, 0, 0);
+        label.Margin = new Padding(0, 6, 0, 0);
+        return label;
+    }
+
+    public static Panel CriarSeparador()
+    {
+        var line = new Panel();
+        line.Height = 1;
+        line.Dock = DockStyle.Top;
+        line.BackColor = C_BordaLeve;
+        line.Margin = new Padding(0, 2, 0, 6);
+        return line;
     }
 
     public static TableLayoutPanel CriarLayoutVertical()
@@ -56,15 +73,71 @@ internal static class DesignSystem
 
     public static void AdicionarLinha(TableLayoutPanel layout, Control control)
     {
-        if (layout == null || control == null)
-        {
-            return;
-        }
-
+        if (layout == null || control == null) return;
         int row = layout.RowCount;
         layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         layout.Controls.Add(control, 0, row);
         layout.RowCount = row + 1;
+    }
+
+    public static Button CriarBotao(string texto, bool primario)
+    {
+        var btn = new Button();
+        btn.Text = texto;
+        btn.Height = 34;
+        btn.Dock = DockStyle.Fill;
+        btn.FlatStyle = FlatStyle.Flat;
+        btn.FlatAppearance.BorderSize = 1;
+        btn.Cursor = Cursors.Hand;
+        btn.Font = F_Botao;
+        btn.TextAlign = ContentAlignment.MiddleLeft;
+        btn.Padding = new Padding(8, 0, 8, 0);
+        btn.Margin = new Padding(0, 0, 0, 3);
+
+        if (primario)
+        {
+            btn.BackColor = C_Destaque;
+            btn.ForeColor = C_TextoClaro;
+            btn.FlatAppearance.BorderColor = C_DestaqueHover;
+            btn.FlatAppearance.MouseDownBackColor = C_DestaqueHover;
+            btn.MouseEnter += (s, e) => { btn.BackColor = C_DestaqueHover; };
+            btn.MouseLeave += (s, e) => { btn.BackColor = C_Destaque; };
+        }
+        else
+        {
+            btn.BackColor = C_Superficie;
+            btn.ForeColor = C_TextoPrimario;
+            btn.FlatAppearance.BorderColor = C_Borda;
+            btn.FlatAppearance.MouseDownBackColor = C_Hover;
+            btn.MouseEnter += (s, e) => { btn.BackColor = C_Hover; };
+            btn.MouseLeave += (s, e) => { btn.BackColor = C_Superficie; };
+        }
+
+        return btn;
+    }
+
+    public static Button CriarBotaoPerigo(string texto)
+    {
+        var btn = CriarBotao(texto, false);
+        btn.ForeColor = C_Erro;
+        btn.MouseEnter += (s, e) => { btn.ForeColor = C_Erro; };
+        btn.MouseLeave += (s, e) => { btn.ForeColor = C_Erro; };
+        return btn;
+    }
+
+    public static TextBox CriarCampoEntrada(bool multiline, int altura)
+    {
+        var txt = new TextBox();
+        txt.Multiline = multiline;
+        txt.ScrollBars = multiline ? ScrollBars.Vertical : ScrollBars.None;
+        txt.Dock = DockStyle.Fill;
+        txt.Height = altura;
+        txt.Font = F_Texto;
+        txt.Margin = new Padding(0, 0, 0, 4);
+        txt.BackColor = C_Superficie;
+        txt.ForeColor = C_TextoPrimario;
+        txt.BorderStyle = BorderStyle.FixedSingle;
+        return txt;
     }
 
     public static Label CriarLabelInfo(string texto)
@@ -72,92 +145,10 @@ internal static class DesignSystem
         var label = new Label();
         label.Text = texto;
         label.ForeColor = C_TextoSecundario;
-        label.Font = F_Texto;
+        label.Font = F_TextoPequeno;
         label.AutoSize = true;
         label.Dock = DockStyle.Fill;
-        label.Margin = new Padding(0, 0, 0, 8);
+        label.Margin = new Padding(0, 0, 0, 4);
         return label;
-    }
-
-    public static Button CriarBotaoDashboard(string texto, bool ehPerigo)
-    {
-        var btn = new Button();
-        btn.Text = texto;
-        btn.Height = 36;
-        btn.Dock = DockStyle.Fill;
-        btn.FlatStyle = FlatStyle.Flat;
-        btn.FlatAppearance.BorderSize = 1;
-        btn.FlatAppearance.BorderColor = C_Borda;
-        btn.Cursor = Cursors.Hand;
-        btn.Font = F_Texto;
-        btn.TextAlign = ContentAlignment.MiddleLeft;
-        btn.Padding = new Padding(12, 0, 12, 0);
-        btn.Margin = new Padding(0, 0, 0, 8);
-        btn.BackColor = ehPerigo ? C_FundoVermelhoSuave : C_CardFundo;
-        btn.ForeColor = ehPerigo ? C_DestaqueVermelho : C_TextoPrimario;
-
-        btn.MouseEnter += (s, e) => {
-            btn.BackColor = ehPerigo ? C_FundoVermelhoHover : C_BotaoHover;
-            if (!ehPerigo) btn.ForeColor = C_DestaqueAzul;
-        };
-
-        btn.MouseLeave += (s, e) => {
-            btn.BackColor = ehPerigo ? C_FundoVermelhoSuave : C_CardFundo;
-            btn.ForeColor = ehPerigo ? C_DestaqueVermelho : C_TextoPrimario;
-        };
-        return btn;
-    }
-
-    public static Button CriarBotaoHelp(string textoToolTip)
-    {
-        var btnHelp = new Button();
-        btnHelp.Text = "[?]";
-        btnHelp.Height = 36;
-        btnHelp.Width = 36;
-        btnHelp.FlatStyle = FlatStyle.Flat;
-        btnHelp.FlatAppearance.BorderSize = 1;
-        btnHelp.FlatAppearance.BorderColor = C_Borda;
-        btnHelp.BackColor = C_CardFundo;
-        btnHelp.ForeColor = C_DestaqueAzul;
-        btnHelp.Font = F_Texto;
-        btnHelp.Cursor = Cursors.Hand;
-        btnHelp.Margin = new Padding(6, 0, 0, 0);
-        btnHelp.Click += delegate {
-            MessageBox.Show(
-                textoToolTip,
-                "Como usar",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Information
-            );
-        };
-        return btnHelp;
-    }
-
-    // Retorna um TableLayoutPanel de 2 colunas:
-    //   coluna 0 (Percent 100%) -> botao principal (texto nunca cortado)
-    //   coluna 1 (Absolute 44px) -> botao [?]
-    // Margem inferior padrao de 8px para separacao entre linhas.
-    public static TableLayoutPanel CriarLinhaComHelp(Button mainButton, Button helpButton, int marginBottom)
-    {
-        var row = new TableLayoutPanel();
-        row.ColumnCount = 2;
-        row.RowCount = 1;
-        row.Dock = DockStyle.Top;
-        row.AutoSize = true;
-        row.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-        row.Margin = new Padding(0, 0, 0, marginBottom);
-        row.Padding = new Padding(0);
-        row.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-        row.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 44F));
-        row.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        // mainButton deve preencher a celula
-        mainButton.Dock = DockStyle.Fill;
-        mainButton.MinimumSize = new Size(0, 36);
-        row.Controls.Add(mainButton, 0, 0);
-        // helpButton alinhado verticalmente
-        helpButton.Dock = DockStyle.Fill;
-        helpButton.Margin = new Padding(4, 0, 0, 0);
-        row.Controls.Add(helpButton, 1, 0);
-        return row;
     }
 }

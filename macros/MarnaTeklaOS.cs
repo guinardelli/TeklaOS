@@ -41,44 +41,61 @@ public class Script
 
 internal static class DesignSystem
 {
-    // --- Paleta de Cores (Design System) ---
-    public static readonly Color C_FundoForm = Color.FromArgb(240, 242, 245);
-    public static readonly Color C_CardFundo = Color.White;
-    public static readonly Color C_Cabecalho = Color.FromArgb(0, 80, 150);
-    public static readonly Color C_TextoPrimario = Color.FromArgb(30, 30, 30);
-    public static readonly Color C_TextoSecundario = Color.FromArgb(100, 110, 120);
+    // --- Paleta Minimalista (Cinzas + Destaque unico) ---
+    public static readonly Color C_Fundo = Color.FromArgb(245, 245, 245);
+    public static readonly Color C_Superficie = Color.White;
+    public static readonly Color C_Cabecalho = Color.FromArgb(38, 38, 38);
+    public static readonly Color C_TextoPrimario = Color.FromArgb(26, 26, 26);
+    public static readonly Color C_TextoSecundario = Color.FromArgb(102, 102, 102);
     public static readonly Color C_TextoClaro = Color.White;
-    public static readonly Color C_TextoCabecalhoSec = Color.FromArgb(200, 220, 255);
-    public static readonly Color C_Borda = Color.FromArgb(220, 224, 230);
-    public static readonly Color C_Transparente = Color.Transparent;
+    public static readonly Color C_TextoDesabilitado = Color.FromArgb(160, 160, 160);
+    public static readonly Color C_Borda = Color.FromArgb(218, 218, 218);
+    public static readonly Color C_BordaLeve = Color.FromArgb(234, 234, 234);
+    public static readonly Color C_Hover = Color.FromArgb(240, 240, 240);
 
-    // Cores de Acao
-    public static readonly Color C_BotaoHover = Color.FromArgb(245, 248, 255);
-    public static readonly Color C_DestaqueAzul = Color.FromArgb(0, 120, 215);
-    public static readonly Color C_DestaqueVermelho = Color.FromArgb(220, 53, 69);
-    public static readonly Color C_FundoVermelhoSuave = Color.FromArgb(255, 245, 245);
-    public static readonly Color C_FundoVermelhoHover = Color.FromArgb(255, 230, 230);
+    // Destaque (unico tom de azul ??? usado para acoes primarias)
+    public static readonly Color C_Destaque = Color.FromArgb(37, 99, 235);
+    public static readonly Color C_DestaqueHover = Color.FromArgb(29, 78, 216);
+    public static readonly Color C_DestaqueSuave = Color.FromArgb(239, 246, 255);
+
+    // Semanticas (minimas)
+    public static readonly Color C_Sucesso = Color.FromArgb(22, 163, 74);
+    public static readonly Color C_Erro = Color.FromArgb(220, 38, 38);
+    public static readonly Color C_Atencao = Color.FromArgb(180, 130, 0);
 
     // Tipografia
-    public static readonly Font F_Titulo = new Font("Segoe UI", 12F, FontStyle.Bold);
-    public static readonly Font F_Texto = new Font("Segoe UI", 10F, FontStyle.Regular);
-    public static readonly Font F_Secao = new Font("Segoe UI", 10F, FontStyle.Bold);
+    public static readonly Font F_Titulo = new Font("Segoe UI Semibold", 11F, FontStyle.Bold);
+    public static readonly Font F_Secao = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold);
+    public static readonly Font F_Texto = new Font("Segoe UI", 9.5F, FontStyle.Regular);
+    public static readonly Font F_TextoPequeno = new Font("Segoe UI", 8.5F, FontStyle.Regular);
+    public static readonly Font F_Botao = new Font("Segoe UI Semibold", 9F, FontStyle.Bold);
     public static readonly Font F_Mono = new Font("Consolas", 9F);
 
     // --- Helpers UI ---
-    public static GroupBox CriarGrupoDashboard(string titulo)
+
+    public static Label CriarRotuloSecao(string texto)
     {
-        var group = new GroupBox();
-        group.Text = titulo;
-        group.Font = F_Secao;
-        group.ForeColor = C_TextoPrimario;
-        group.BackColor = C_CardFundo;
-        group.Dock = DockStyle.Top;
-        group.AutoSize = true;
-        group.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-        group.Padding = new Padding(12, 8, 12, 12);
-        group.Margin = new Padding(0, 0, 0, 12);
-        return group;
+        var label = new Label();
+        label.Text = texto.ToUpperInvariant();
+        label.Font = F_TextoPequeno;
+        label.ForeColor = C_TextoSecundario;
+        label.AutoSize = false;
+        label.Dock = DockStyle.Top;
+        label.Height = 28;
+        label.TextAlign = ContentAlignment.BottomLeft;
+        label.Padding = new Padding(2, 0, 0, 0);
+        label.Margin = new Padding(0, 6, 0, 0);
+        return label;
+    }
+
+    public static Panel CriarSeparador()
+    {
+        var line = new Panel();
+        line.Height = 1;
+        line.Dock = DockStyle.Top;
+        line.BackColor = C_BordaLeve;
+        line.Margin = new Padding(0, 2, 0, 6);
+        return line;
     }
 
     public static TableLayoutPanel CriarLayoutVertical()
@@ -97,15 +114,71 @@ internal static class DesignSystem
 
     public static void AdicionarLinha(TableLayoutPanel layout, Control control)
     {
-        if (layout == null || control == null)
-        {
-            return;
-        }
-
+        if (layout == null || control == null) return;
         int row = layout.RowCount;
         layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         layout.Controls.Add(control, 0, row);
         layout.RowCount = row + 1;
+    }
+
+    public static Button CriarBotao(string texto, bool primario)
+    {
+        var btn = new Button();
+        btn.Text = texto;
+        btn.Height = 34;
+        btn.Dock = DockStyle.Fill;
+        btn.FlatStyle = FlatStyle.Flat;
+        btn.FlatAppearance.BorderSize = 1;
+        btn.Cursor = Cursors.Hand;
+        btn.Font = F_Botao;
+        btn.TextAlign = ContentAlignment.MiddleLeft;
+        btn.Padding = new Padding(8, 0, 8, 0);
+        btn.Margin = new Padding(0, 0, 0, 3);
+
+        if (primario)
+        {
+            btn.BackColor = C_Destaque;
+            btn.ForeColor = C_TextoClaro;
+            btn.FlatAppearance.BorderColor = C_DestaqueHover;
+            btn.FlatAppearance.MouseDownBackColor = C_DestaqueHover;
+            btn.MouseEnter += (s, e) => { btn.BackColor = C_DestaqueHover; };
+            btn.MouseLeave += (s, e) => { btn.BackColor = C_Destaque; };
+        }
+        else
+        {
+            btn.BackColor = C_Superficie;
+            btn.ForeColor = C_TextoPrimario;
+            btn.FlatAppearance.BorderColor = C_Borda;
+            btn.FlatAppearance.MouseDownBackColor = C_Hover;
+            btn.MouseEnter += (s, e) => { btn.BackColor = C_Hover; };
+            btn.MouseLeave += (s, e) => { btn.BackColor = C_Superficie; };
+        }
+
+        return btn;
+    }
+
+    public static Button CriarBotaoPerigo(string texto)
+    {
+        var btn = CriarBotao(texto, false);
+        btn.ForeColor = C_Erro;
+        btn.MouseEnter += (s, e) => { btn.ForeColor = C_Erro; };
+        btn.MouseLeave += (s, e) => { btn.ForeColor = C_Erro; };
+        return btn;
+    }
+
+    public static TextBox CriarCampoEntrada(bool multiline, int altura)
+    {
+        var txt = new TextBox();
+        txt.Multiline = multiline;
+        txt.ScrollBars = multiline ? ScrollBars.Vertical : ScrollBars.None;
+        txt.Dock = DockStyle.Fill;
+        txt.Height = altura;
+        txt.Font = F_Texto;
+        txt.Margin = new Padding(0, 0, 0, 4);
+        txt.BackColor = C_Superficie;
+        txt.ForeColor = C_TextoPrimario;
+        txt.BorderStyle = BorderStyle.FixedSingle;
+        return txt;
     }
 
     public static Label CriarLabelInfo(string texto)
@@ -113,93 +186,11 @@ internal static class DesignSystem
         var label = new Label();
         label.Text = texto;
         label.ForeColor = C_TextoSecundario;
-        label.Font = F_Texto;
+        label.Font = F_TextoPequeno;
         label.AutoSize = true;
         label.Dock = DockStyle.Fill;
-        label.Margin = new Padding(0, 0, 0, 8);
+        label.Margin = new Padding(0, 0, 0, 4);
         return label;
-    }
-
-    public static Button CriarBotaoDashboard(string texto, bool ehPerigo)
-    {
-        var btn = new Button();
-        btn.Text = texto;
-        btn.Height = 36;
-        btn.Dock = DockStyle.Fill;
-        btn.FlatStyle = FlatStyle.Flat;
-        btn.FlatAppearance.BorderSize = 1;
-        btn.FlatAppearance.BorderColor = C_Borda;
-        btn.Cursor = Cursors.Hand;
-        btn.Font = F_Texto;
-        btn.TextAlign = ContentAlignment.MiddleLeft;
-        btn.Padding = new Padding(12, 0, 12, 0);
-        btn.Margin = new Padding(0, 0, 0, 8);
-        btn.BackColor = ehPerigo ? C_FundoVermelhoSuave : C_CardFundo;
-        btn.ForeColor = ehPerigo ? C_DestaqueVermelho : C_TextoPrimario;
-
-        btn.MouseEnter += (s, e) => {
-            btn.BackColor = ehPerigo ? C_FundoVermelhoHover : C_BotaoHover;
-            if (!ehPerigo) btn.ForeColor = C_DestaqueAzul;
-        };
-
-        btn.MouseLeave += (s, e) => {
-            btn.BackColor = ehPerigo ? C_FundoVermelhoSuave : C_CardFundo;
-            btn.ForeColor = ehPerigo ? C_DestaqueVermelho : C_TextoPrimario;
-        };
-        return btn;
-    }
-
-    public static Button CriarBotaoHelp(string textoToolTip)
-    {
-        var btnHelp = new Button();
-        btnHelp.Text = "[?]";
-        btnHelp.Height = 36;
-        btnHelp.Width = 36;
-        btnHelp.FlatStyle = FlatStyle.Flat;
-        btnHelp.FlatAppearance.BorderSize = 1;
-        btnHelp.FlatAppearance.BorderColor = C_Borda;
-        btnHelp.BackColor = C_CardFundo;
-        btnHelp.ForeColor = C_DestaqueAzul;
-        btnHelp.Font = F_Texto;
-        btnHelp.Cursor = Cursors.Hand;
-        btnHelp.Margin = new Padding(6, 0, 0, 0);
-        btnHelp.Click += delegate {
-            MessageBox.Show(
-                textoToolTip,
-                "Como usar",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Information
-            );
-        };
-        return btnHelp;
-    }
-
-    // Retorna um TableLayoutPanel de 2 colunas:
-    //   coluna 0 (Percent 100%) -> botao principal (texto nunca cortado)
-    //   coluna 1 (Absolute 44px) -> botao [?]
-    // Margem inferior padrao de 8px para separacao entre linhas.
-    public static TableLayoutPanel CriarLinhaComHelp(Button mainButton, Button helpButton, int marginBottom)
-    {
-        var row = new TableLayoutPanel();
-        row.ColumnCount = 2;
-        row.RowCount = 1;
-        row.Dock = DockStyle.Top;
-        row.AutoSize = true;
-        row.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-        row.Margin = new Padding(0, 0, 0, marginBottom);
-        row.Padding = new Padding(0);
-        row.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-        row.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 44F));
-        row.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        // mainButton deve preencher a celula
-        mainButton.Dock = DockStyle.Fill;
-        mainButton.MinimumSize = new Size(0, 36);
-        row.Controls.Add(mainButton, 0, 0);
-        // helpButton alinhado verticalmente
-        helpButton.Dock = DockStyle.Fill;
-        helpButton.Margin = new Padding(4, 0, 0, 0);
-        row.Controls.Add(helpButton, 1, 0);
-        return row;
     }
 }
 
@@ -211,834 +202,292 @@ internal static class MenuUi
         using (var form = new Form())
         using (var toolTip = new ToolTip())
         {
-            // 1. Configuracoes da Janela
-            form.Text = "MarnaTeklaOS - Painel de Controle";
+            // Janela compacta e fixa ??? tudo cabe sem scroll
+            form.Text = "MarnaTeklaOS";
             form.StartPosition = FormStartPosition.CenterScreen;
-            form.Size = new Size(520, 760);
-            form.MinimumSize = new Size(460, 620);
+            form.Size = new Size(380, 430);
+            form.MinimumSize = new Size(320, 380);
+            form.MaximumSize = new Size(560, 560);
             form.Font = DesignSystem.F_Texto;
-            form.BackColor = DesignSystem.C_FundoForm;
-            form.FormBorderStyle = FormBorderStyle.FixedSingle;
+            form.BackColor = DesignSystem.C_Superficie;
+            form.FormBorderStyle = FormBorderStyle.Sizable;
             form.MaximizeBox = false;
             form.TopMost = true;
+            form.KeyPreview = true;
 
-            toolTip.InitialDelay = 250;
-            toolTip.ReshowDelay = 120;
-            toolTip.AutoPopDelay = 12000;
+            toolTip.InitialDelay = 400;
+            toolTip.ReshowDelay = 200;
+            toolTip.AutoPopDelay = 8000;
             toolTip.ShowAlways = true;
 
-            var mainLayout = new TableLayoutPanel();
-            mainLayout.Dock = DockStyle.Fill;
-            mainLayout.ColumnCount = 1;
-            mainLayout.RowCount = 3;
-            mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 92F));
-            mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 56F));
-
-            // 2. Cabecalho
-            var headerPanel = new Panel();
-            headerPanel.Dock = DockStyle.Fill;
-            headerPanel.BackColor = DesignSystem.C_Cabecalho;
-            headerPanel.Padding = new Padding(16, 12, 16, 12);
-
-            var headerTextLayout = new TableLayoutPanel();
-            headerTextLayout.Dock = DockStyle.Fill;
-            headerTextLayout.ColumnCount = 1;
-            headerTextLayout.RowCount = 2;
-            headerTextLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            headerTextLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            // ?????????????????????????????????????????????????????????????????????????????????????????????????????????
+            // HEADER ??? faixa escura, t??tulo
+            // ?????????????????????????????????????????????????????????????????????????????????????????????????????????
+            var header = new TableLayoutPanel();
+            header.Dock = DockStyle.Top;
+            header.Height = 48;
+            header.ColumnCount = 1;
+            header.RowCount = 1;
+            header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            header.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+            header.BackColor = DesignSystem.C_Cabecalho;
+            header.Padding = new Padding(16, 0, 16, 0);
 
             var lblTitle = new Label();
             lblTitle.Text = "MarnaTeklaOS";
             lblTitle.ForeColor = DesignSystem.C_TextoClaro;
             lblTitle.Font = DesignSystem.F_Titulo;
             lblTitle.AutoSize = true;
-            lblTitle.Dock = DockStyle.Fill;
+            lblTitle.Anchor = AnchorStyles.Left;
+            lblTitle.Margin = new Padding(0);
 
-            var lblSub = new Label();
-            lblSub.Text = "Utilitarios para Tekla Structures";
-            lblSub.ForeColor = DesignSystem.C_TextoCabecalhoSec;
-            lblSub.Font = DesignSystem.F_Texto;
-            lblSub.AutoSize = true;
-            lblSub.Dock = DockStyle.Fill;
+            header.Controls.Add(lblTitle, 0, 0);
 
-            headerTextLayout.Controls.Add(lblTitle, 0, 0);
-            headerTextLayout.Controls.Add(lblSub, 0, 1);
-            headerPanel.Controls.Add(headerTextLayout);
+            // ?????????????????????????????????????????????????????????????????????????????????????????????????????????
+            // BODY ??? espa??amento generoso, sem r??tulos de se????o
+            // ?????????????????????????????????????????????????????????????????????????????????????????????????????????
+            var body = new Panel();
+            body.Dock = DockStyle.Fill;
+            body.BackColor = DesignSystem.C_Superficie;
+            body.Padding = new Padding(16, 14, 16, 8);
 
-            // 3. Conteudo principal
-            var contentPanel = new Panel();
-            contentPanel.Dock = DockStyle.Fill;
-            contentPanel.Padding = new Padding(12);
-            contentPanel.BackColor = DesignSystem.C_FundoForm;
+            var bodyLayout = new TableLayoutPanel();
+            bodyLayout.Dock = DockStyle.Fill;
+            bodyLayout.ColumnCount = 1;
+            bodyLayout.RowCount = 9;
+            bodyLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            // Linhas: campo | bot??o | sep | campo | bot??o | sep | btn | btn | sep+btn
+            bodyLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 52F));  // txtSelecao
+            bodyLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34F));  // btnSelecionar
+            bodyLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 14F));  // separador
+            bodyLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 28F));  // txtDesenho
+            bodyLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34F));  // btnDesenho
+            bodyLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 14F));  // separador
+            bodyLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34F));  // btnComparar
+            bodyLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34F));  // btnNumeracao
+            bodyLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F)); // espa??o + reparo
 
-            var contentLayout = new TableLayoutPanel();
-            contentLayout.Dock = DockStyle.Fill;
-            contentLayout.ColumnCount = 1;
-            contentLayout.RowCount = 3;
-            contentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-            contentLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            contentLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            contentLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            contentPanel.Controls.Add(contentLayout);
-
-            var filterRowsByGroup = new Dictionary<GroupBox, List<Control>>();
-            var filterKeywordsByRow = new Dictionary<Control, string>();
-            var groupToTab = new Dictionary<GroupBox, TabPage>();
-
-            Action<GroupBox, Control, string> registerFilterRow = delegate(GroupBox group, Control rowControl, string searchKeywords)
-            {
-                if (group == null || rowControl == null)
-                {
-                    return;
-                }
-
-                List<Control> controls;
-                if (!filterRowsByGroup.TryGetValue(group, out controls))
-                {
-                    controls = new List<Control>();
-                    filterRowsByGroup[group] = controls;
-                }
-
-                controls.Add(rowControl);
-
-                string raw = string.Format("{0} {1} {2}", searchKeywords, rowControl.Text, group.Text);
-                filterKeywordsByRow[rowControl] = NormalizeSearchForFilter(raw);
-            };
-
-            // Busca
-            var grpSearch = DesignSystem.CriarGrupoDashboard("Busca de acoes");
-            StyleGroup(grpSearch, Color.FromArgb(248, 249, 252), DesignSystem.C_DestaqueAzul);
-            var searchLayout = DesignSystem.CriarLayoutVertical();
-            var lblSearchInfo = DesignSystem.CriarLabelInfo("Digite para filtrar botoes e funcoes no painel.");
-            var txtSearch = new TextBox();
-            txtSearch.Multiline = false;
-            txtSearch.Dock = DockStyle.Fill;
-            txtSearch.Height = 28;
-            txtSearch.Font = DesignSystem.F_Texto;
-            txtSearch.Margin = new Padding(0, 0, 0, 0);
-            txtSearch.BackColor = DesignSystem.C_CardFundo;
-            txtSearch.Text = string.Empty;
-            toolTip.SetToolTip(txtSearch, "Exemplos: material, numeracao, selecao, reparo, peso.");
-
-            DesignSystem.AdicionarLinha(searchLayout, lblSearchInfo);
-            DesignSystem.AdicionarLinha(searchLayout, txtSearch);
-            grpSearch.Controls.Add(searchLayout);
-            contentLayout.Controls.Add(grpSearch, 0, 0);
-
-            var lblNoResults = DesignSystem.CriarLabelInfo("Nenhuma acao encontrada para o filtro informado.");
-            lblNoResults.ForeColor = DesignSystem.C_DestaqueVermelho;
-            lblNoResults.Visible = false;
-            lblNoResults.Margin = new Padding(4, 4, 4, 8);
-            contentLayout.Controls.Add(lblNoResults, 0, 1);
-
-            // Guias
-            var tabs = new TabControl();
-            tabs.Dock = DockStyle.Fill;
-            tabs.DrawMode = TabDrawMode.OwnerDrawFixed;
-            tabs.SizeMode = TabSizeMode.Fixed;
-            tabs.ItemSize = new Size(120, 28);
-            tabs.Font = DesignSystem.F_Texto;
-            tabs.Padding = new System.Drawing.Point(14, 4);
-
-            var tabHeaderColors = new Color[]
-            {
-                Color.FromArgb(226, 236, 252),
-                Color.FromArgb(228, 245, 232),
-                Color.FromArgb(241, 233, 251),
-                Color.FromArgb(253, 236, 226),
-                Color.FromArgb(224, 246, 246),
-                Color.FromArgb(252, 232, 232)
-            };
-
-            tabs.DrawItem += delegate(object sender, DrawItemEventArgs e)
-            {
-                if (e.Index < 0 || e.Index >= tabs.TabPages.Count)
-                {
-                    return;
-                }
-
-                bool selected = (e.State & DrawItemState.Selected) == DrawItemState.Selected;
-                Color baseColor = e.Index < tabHeaderColors.Length ? tabHeaderColors[e.Index] : Color.White;
-                Color fillColor = selected ? ShiftColor(baseColor, -16) : baseColor;
-
-                using (var brush = new SolidBrush(fillColor))
-                {
-                    e.Graphics.FillRectangle(brush, e.Bounds);
-                }
-
-                Rectangle border = e.Bounds;
-                border.Width -= 1;
-                border.Height -= 1;
-                using (var pen = new Pen(DesignSystem.C_Borda))
-                {
-                    e.Graphics.DrawRectangle(pen, border);
-                }
-
-                TextRenderer.DrawText(
-                    e.Graphics,
-                    tabs.TabPages[e.Index].Text,
-                    DesignSystem.F_Texto,
-                    e.Bounds,
-                    DesignSystem.C_TextoPrimario,
-                    TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
-            };
-
-            contentLayout.Controls.Add(tabs, 0, 2);
-
-            // Criacao das abas
-            TableLayoutPanel layoutConsultas;
-            TabPage tabConsultas = CreateTabPageWithLayout(tabs, "Consultas", Color.FromArgb(245, 248, 255), out layoutConsultas);
-
-            TableLayoutPanel layoutSelecao;
-            TabPage tabSelecao = CreateTabPageWithLayout(tabs, "Selecao", Color.FromArgb(247, 252, 247), out layoutSelecao);
-
-            TableLayoutPanel layoutDesenhos;
-            TabPage tabDesenhos = CreateTabPageWithLayout(tabs, "Desenhos", Color.FromArgb(250, 246, 255), out layoutDesenhos);
-
-            TableLayoutPanel layoutModelo;
-            TabPage tabModelo = CreateTabPageWithLayout(tabs, "Modelo", Color.FromArgb(255, 248, 243), out layoutModelo);
-
-            TableLayoutPanel layoutProducao;
-            TabPage tabProducao = CreateTabPageWithLayout(tabs, "Producao", Color.FromArgb(244, 252, 252), out layoutProducao);
-
-            TableLayoutPanel layoutQualidade;
-            TabPage tabQualidade = CreateTabPageWithLayout(tabs, "Qualidade", Color.FromArgb(255, 246, 246), out layoutQualidade);
-
-            // Grupo: Relatorios e consultas
-            var grpReports = DesignSystem.CriarGrupoDashboard("Relatorios e consultas");
-            StyleGroup(grpReports, Color.FromArgb(250, 252, 255), DesignSystem.C_DestaqueAzul);
-            groupToTab[grpReports] = tabConsultas;
-            var reportsLayout = DesignSystem.CriarLayoutVertical();
-
-            var btnGeral = DesignSystem.CriarBotaoDashboard("Gerar relatorio do modelo", false);
-            toolTip.SetToolTip(btnGeral, "Exibe informacoes do modelo e do projeto.");
-
-            var btnSel = DesignSystem.CriarBotaoDashboard("Ver pecas selecionadas", false);
-            toolTip.SetToolTip(btnSel, "Exibe um relatorio das pecas atualmente selecionadas.");
-
-            var btnMaterialAll = DesignSystem.CriarBotaoDashboard("Resumo de materiais (modelo inteiro)", false);
-            toolTip.SetToolTip(btnMaterialAll, "Agrupa pecas por material e perfil para o modelo inteiro.");
-
-            var btnMaterialSel = DesignSystem.CriarBotaoDashboard("Resumo de materiais (selecao)", false);
-            toolTip.SetToolTip(btnMaterialSel, "Agrupa pecas por material e perfil apenas da selecao atual.");
-
-            DesignSystem.AdicionarLinha(reportsLayout, btnGeral);
-            registerFilterRow(grpReports, btnGeral, "relatorio modelo projeto informacoes");
-
-            DesignSystem.AdicionarLinha(reportsLayout, btnSel);
-            registerFilterRow(grpReports, btnSel, "pecas selecionadas relatorio");
-
-            DesignSystem.AdicionarLinha(reportsLayout, btnMaterialAll);
-            registerFilterRow(grpReports, btnMaterialAll, "material resumo modelo inteiro compras orcamento");
-
-            DesignSystem.AdicionarLinha(reportsLayout, btnMaterialSel);
-            registerFilterRow(grpReports, btnMaterialSel, "material resumo selecao compras orcamento");
-
-            grpReports.Controls.Add(reportsLayout);
-            DesignSystem.AdicionarLinha(layoutConsultas, grpReports);
-
-            // Grupo: Selecao de pecas
-            var grpSelection = DesignSystem.CriarGrupoDashboard("Selecao de pecas");
-            StyleGroup(grpSelection, Color.FromArgb(248, 255, 248), Color.FromArgb(38, 125, 68));
-            groupToTab[grpSelection] = tabSelecao;
-            var selectionLayout = DesignSystem.CriarLayoutVertical();
+            // --- Bloco A: Sele????o por nome ---
 
             var txtSelectionInput = new TextBox();
             txtSelectionInput.Multiline = true;
-            txtSelectionInput.ScrollBars = ScrollBars.Vertical;
+            txtSelectionInput.ScrollBars = ScrollBars.None;
             txtSelectionInput.Dock = DockStyle.Fill;
-            txtSelectionInput.Height = 60;
             txtSelectionInput.Font = DesignSystem.F_Texto;
-            txtSelectionInput.Margin = new Padding(0, 0, 0, 8);
-            txtSelectionInput.BackColor = DesignSystem.C_CardFundo;
-            toolTip.SetToolTip(txtSelectionInput, "Digite os nomes dos conjuntos separados por virgula. Ex.: PP1,PP2,VR1");
+            txtSelectionInput.BackColor = DesignSystem.C_Fundo;
+            txtSelectionInput.ForeColor = DesignSystem.C_TextoPrimario;
+            txtSelectionInput.BorderStyle = BorderStyle.FixedSingle;
+            txtSelectionInput.Margin = new Padding(0, 0, 0, 2);
+            toolTip.SetToolTip(txtSelectionInput, "Nomes de conjuntos separados por virgula ??? PP1, PP2, VR1\nCtrl+Enter para executar.");
 
-            var btnSelectParts = DesignSystem.CriarBotaoDashboard("Selecionar pecas", false);
-            toolTip.SetToolTip(btnSelectParts, "Seleciona automaticamente os conjuntos informados no campo acima.");
+            var btnSelectParts = DesignSystem.CriarBotao("Selecionar conjuntos", false);
+            btnSelectParts.Margin = new Padding(0, 0, 0, 0);
+            toolTip.SetToolTip(btnSelectParts, "Seleciona os conjuntos informados no campo acima.");
 
-            DesignSystem.AdicionarLinha(selectionLayout, txtSelectionInput);
-            registerFilterRow(grpSelection, txtSelectionInput, "selecao selecionar pecas conjuntos");
+            bodyLayout.Controls.Add(txtSelectionInput, 0, 0);
+            bodyLayout.Controls.Add(btnSelectParts, 0, 1);
+            bodyLayout.Controls.Add(BuildSeparator(), 0, 2);
 
-            DesignSystem.AdicionarLinha(selectionLayout, btnSelectParts);
-            registerFilterRow(grpSelection, btnSelectParts, "selecao selecionar pecas conjuntos");
-
-            grpSelection.Controls.Add(selectionLayout);
-            DesignSystem.AdicionarLinha(layoutSelecao, grpSelection);
-
-            // Grupo: Vinculo Modelo e Desenho
-            var grpDrawings = DesignSystem.CriarGrupoDashboard("Vinculo Modelo e Desenho");
-            StyleGroup(grpDrawings, Color.FromArgb(252, 249, 255), Color.FromArgb(94, 67, 165));
-            groupToTab[grpDrawings] = tabDesenhos;
-            var drawingsLayout = DesignSystem.CriarLayoutVertical();
-
-            var lblDrawingInfo = DesignSystem.CriarLabelInfo("Marca ou nome do desenho (ex: PP1):");
-            DesignSystem.AdicionarLinha(drawingsLayout, lblDrawingInfo);
-            registerFilterRow(grpDrawings, lblDrawingInfo, "desenho marca nome vinculo");
+            // --- Bloco B: V??nculo desenho ??? modelo ---
 
             var txtDrawingMark = new TextBox();
-            txtDrawingMark.Multiline = false;
             txtDrawingMark.Dock = DockStyle.Fill;
-            txtDrawingMark.Height = 28;
             txtDrawingMark.Font = DesignSystem.F_Texto;
-            txtDrawingMark.Margin = new Padding(0, 0, 0, 8);
-            txtDrawingMark.BackColor = DesignSystem.C_CardFundo;
-            toolTip.SetToolTip(txtDrawingMark, "Digite a marca do desenho conforme Document Manager.");
-            DesignSystem.AdicionarLinha(drawingsLayout, txtDrawingMark);
-            registerFilterRow(grpDrawings, txtDrawingMark, "desenho marca nome vinculo");
+            txtDrawingMark.BackColor = DesignSystem.C_Fundo;
+            txtDrawingMark.ForeColor = DesignSystem.C_TextoPrimario;
+            txtDrawingMark.BorderStyle = BorderStyle.FixedSingle;
+            txtDrawingMark.Margin = new Padding(0, 0, 0, 2);
+            toolTip.SetToolTip(txtDrawingMark, "Marca do desenho conforme o Document Manager.\nEnter para executar.");
 
-            var btnSelectFromDraw = DesignSystem.CriarBotaoDashboard("Selecionar peca base do modelo", false);
-            toolTip.SetToolTip(btnSelectFromDraw, "Busca o desenho no Document Manager e seleciona a peca base no modelo 3D.");
-            DesignSystem.AdicionarLinha(drawingsLayout, btnSelectFromDraw);
-            registerFilterRow(grpDrawings, btnSelectFromDraw, "desenho vinculo selecionar peca base document manager");
+            var btnSelectFromDraw = DesignSystem.CriarBotao("Selecionar peca pelo desenho", false);
+            btnSelectFromDraw.Margin = new Padding(0);
+            toolTip.SetToolTip(btnSelectFromDraw, "Busca o desenho e seleciona a peca base no modelo 3D.");
 
-            grpDrawings.Controls.Add(drawingsLayout);
-            DesignSystem.AdicionarLinha(layoutDesenhos, grpDrawings);
+            bodyLayout.Controls.Add(txtDrawingMark, 0, 3);
+            bodyLayout.Controls.Add(btnSelectFromDraw, 0, 4);
+            bodyLayout.Controls.Add(BuildSeparator(), 0, 5);
 
-            // Grupo: Acoes do modelo
-            var grpActions = DesignSystem.CriarGrupoDashboard("Acoes do modelo");
-            StyleGroup(grpActions, Color.FromArgb(255, 249, 245), Color.FromArgb(184, 86, 22));
-            groupToTab[grpActions] = tabModelo;
-            var actionsLayout = DesignSystem.CriarLayoutVertical();
+            // --- Bloco C: Verifica????o (sem inputs) ---
 
-            var btnRepair = DesignSystem.CriarBotaoDashboard("Diagnosticar e reparar modelo", true);
-            toolTip.SetToolTip(btnRepair, "Aciona o comando nativo de reparo de modelo e banco de dados no Tekla.");
-            DesignSystem.AdicionarLinha(actionsLayout, btnRepair);
-            registerFilterRow(grpActions, btnRepair, "diagnosticar reparar modelo banco dados");
+            var btnCompare = DesignSystem.CriarBotao("Comparar dois conjuntos selecionados", false);
+            btnCompare.Margin = new Padding(0, 0, 0, 3);
+            toolTip.SetToolTip(btnCompare, "Selecione dois conjuntos no modelo antes de usar.\nCompara numeracao, pecas e propriedades.");
 
-            var btnCompare = DesignSystem.CriarBotaoDashboard("Comparar conjuntos", false);
-            toolTip.SetToolTip(btnCompare, "Compare dois conjuntos selecionados: numeracao, pecas e propriedades.");
-            DesignSystem.AdicionarLinha(actionsLayout, btnCompare);
-            registerFilterRow(grpActions, btnCompare, "comparar conjuntos propriedades");
+            var btnNumberCheck = DesignSystem.CriarBotao("Verificar numeracao de prefixos", false);
+            btnNumberCheck.Margin = new Padding(0, 0, 0, 0);
+            toolTip.SetToolTip(btnNumberCheck, "Selecione pecas no modelo antes de usar.\nVerifica gaps e conjuntos sem posicao.");
 
-            grpActions.Controls.Add(actionsLayout);
-            DesignSystem.AdicionarLinha(layoutModelo, grpActions);
+            bodyLayout.Controls.Add(btnCompare, 0, 6);
+            bodyLayout.Controls.Add(btnNumberCheck, 0, 7);
 
-            // Grupo: Producao e logistica
-            var grpProduction = DesignSystem.CriarGrupoDashboard("Producao e logistica");
-            StyleGroup(grpProduction, Color.FromArgb(245, 253, 253), Color.FromArgb(20, 116, 116));
-            groupToTab[grpProduction] = tabProducao;
-            var productionLayout = DesignSystem.CriarLayoutVertical();
+            // --- Bloco D: Reparo (a????o destrutiva ??? alinhada ao rodap??) ---
+            var bottomRow = new TableLayoutPanel();
+            bottomRow.Dock = DockStyle.Fill;
+            bottomRow.ColumnCount = 1;
+            bottomRow.RowCount = 2;
+            bottomRow.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+            bottomRow.RowStyles.Add(new RowStyle(SizeType.Absolute, 32F));
+            bottomRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            bottomRow.Margin = new Padding(0);
 
-            var btnWeightAll = DesignSystem.CriarBotaoDashboard("Resumo de peso (modelo inteiro)", false);
-            toolTip.SetToolTip(btnWeightAll, "Resumo de peso liquido e bruto por fase para o modelo inteiro.");
-            DesignSystem.AdicionarLinha(productionLayout, btnWeightAll);
-            registerFilterRow(grpProduction, btnWeightAll, "peso resumo fase modelo inteiro producao logistica");
+            var btnRepair = DesignSystem.CriarBotao("Diagnosticar e reparar modelo", false);
+            btnRepair.Margin = new Padding(0);
+            toolTip.SetToolTip(btnRepair, "Aciona o comando nativo de reparo de modelo no Tekla.\nUse apenas quando necessario.");
 
-            var btnWeightSel = DesignSystem.CriarBotaoDashboard("Resumo de peso (selecao)", false);
-            toolTip.SetToolTip(btnWeightSel, "Resumo de peso liquido e bruto por fase para a selecao atual.");
-            DesignSystem.AdicionarLinha(productionLayout, btnWeightSel);
-            registerFilterRow(grpProduction, btnWeightSel, "peso resumo fase selecao producao logistica");
+            bottomRow.Controls.Add(new Panel(), 0, 0); // espa??ador
+            bottomRow.Controls.Add(btnRepair, 0, 1);
+            bodyLayout.Controls.Add(bottomRow, 0, 8);
 
-            grpProduction.Controls.Add(productionLayout);
-            DesignSystem.AdicionarLinha(layoutProducao, grpProduction);
+            body.Controls.Add(bodyLayout);
 
-            // Grupo: Controle de qualidade
-            var grpQuality = DesignSystem.CriarGrupoDashboard("Controle de qualidade");
-            StyleGroup(grpQuality, Color.FromArgb(255, 248, 248), DesignSystem.C_DestaqueVermelho);
-            groupToTab[grpQuality] = tabQualidade;
-            var qualityLayout = DesignSystem.CriarLayoutVertical();
-
-            var btnNumberCheck = DesignSystem.CriarBotaoDashboard("Verificar numeracao dos prefixos selecionados", false);
-            toolTip.SetToolTip(btnNumberCheck, "Verifica gaps de numeracao e conjuntos sem posicao para os prefixos da selecao.");
-            DesignSystem.AdicionarLinha(qualityLayout, btnNumberCheck);
-            registerFilterRow(grpQuality, btnNumberCheck, "verificar numeracao prefixos qualidade gaps posicao");
-
-            grpQuality.Controls.Add(qualityLayout);
-            DesignSystem.AdicionarLinha(layoutQualidade, grpQuality);
-
-            // Rodape
-            var footerPanel = new Panel();
-            footerPanel.Dock = DockStyle.Fill;
-            footerPanel.BackColor = DesignSystem.C_CardFundo;
-            footerPanel.Padding = new Padding(16, 8, 16, 8);
+            // ?????????????????????????????????????????????????????????????????????????????????????????????????????????
+            // FOOTER ??? status + fechar
+            // ?????????????????????????????????????????????????????????????????????????????????????????????????????????
+            var footer = new Panel();
+            footer.Dock = DockStyle.Bottom;
+            footer.Height = 34;
+            footer.BackColor = DesignSystem.C_Fundo;
+            footer.Padding = new Padding(16, 0, 16, 0);
 
             var footerLayout = new TableLayoutPanel();
             footerLayout.Dock = DockStyle.Fill;
-            footerLayout.ColumnCount = 3;
+            footerLayout.ColumnCount = 2;
             footerLayout.RowCount = 1;
-            footerLayout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             footerLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-            footerLayout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            footerLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 64F));
             footerLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-
-            var chkTransp = new CheckBox();
-            chkTransp.Text = "Modo Transparente";
-            chkTransp.AutoSize = true;
-            chkTransp.Cursor = Cursors.Hand;
-            chkTransp.ForeColor = DesignSystem.C_TextoSecundario;
-            chkTransp.BackColor = DesignSystem.C_CardFundo;
-            chkTransp.Font = DesignSystem.F_Texto;
-            chkTransp.Margin = new Padding(0, 6, 10, 0);
-            chkTransp.CheckedChanged += delegate { form.Opacity = chkTransp.Checked ? 0.85 : 1.0; };
+            footerLayout.Margin = new Padding(0);
 
             var lblStatus = new Label();
-            lblStatus.Text = "Pronto.";
+            lblStatus.Text = "";
             lblStatus.AutoEllipsis = true;
             lblStatus.Dock = DockStyle.Fill;
             lblStatus.TextAlign = ContentAlignment.MiddleLeft;
             lblStatus.ForeColor = DesignSystem.C_TextoSecundario;
-            lblStatus.Font = DesignSystem.F_Texto;
-            lblStatus.Margin = new Padding(0, 6, 10, 0);
+            lblStatus.Font = DesignSystem.F_TextoPequeno;
+            lblStatus.Margin = new Padding(0);
 
             var btnClose = new Button();
             btnClose.Text = "Fechar";
-            btnClose.AutoSize = false;
-            btnClose.Size = new Size(90, 30);
+            btnClose.Dock = DockStyle.Fill;
             btnClose.FlatStyle = FlatStyle.Flat;
-            btnClose.FlatAppearance.BorderSize = 1;
-            btnClose.FlatAppearance.BorderColor = DesignSystem.C_Borda;
-            btnClose.BackColor = DesignSystem.C_CardFundo;
+            btnClose.FlatAppearance.BorderSize = 0;
+            btnClose.BackColor = DesignSystem.C_Fundo;
+            btnClose.ForeColor = DesignSystem.C_TextoSecundario;
+            btnClose.Font = DesignSystem.F_TextoPequeno;
             btnClose.Cursor = Cursors.Hand;
-            btnClose.ForeColor = DesignSystem.C_TextoPrimario;
-            btnClose.Font = DesignSystem.F_Texto;
             btnClose.DialogResult = DialogResult.OK;
             btnClose.Margin = new Padding(0);
 
-            footerLayout.Controls.Add(chkTransp, 0, 0);
-            footerLayout.Controls.Add(lblStatus, 1, 0);
-            footerLayout.Controls.Add(btnClose, 2, 0);
-            footerPanel.Controls.Add(footerLayout);
+            footerLayout.Controls.Add(lblStatus, 0, 0);
+            footerLayout.Controls.Add(btnClose, 1, 0);
+            footer.Controls.Add(footerLayout);
 
-            Action<string> setInfoStatus = delegate(string text)
+            // ?????????????????????????????????????????????????????????????????????????????????????????????????????????
+            // STATUS HELPERS
+            // ?????????????????????????????????????????????????????????????????????????????????????????????????????????
+            Action<string, Color> setStatus = delegate(string text, Color color)
             {
                 lblStatus.Text = text;
-                lblStatus.ForeColor = DesignSystem.C_DestaqueAzul;
+                lblStatus.ForeColor = color;
             };
 
-            Action<string> setSuccessStatus = delegate(string text)
+            // ?????????????????????????????????????????????????????????????????????????????????????????????????????????
+            // EVENT WIRING
+            // ?????????????????????????????????????????????????????????????????????????????????????????????????????????
+            txtDrawingMark.KeyDown += delegate(object sender, KeyEventArgs e)
             {
-                lblStatus.Text = text;
-                lblStatus.ForeColor = Color.ForestGreen;
+                if (e.KeyCode == Keys.Enter) { btnSelectFromDraw.PerformClick(); e.SuppressKeyPress = true; }
             };
 
-            Action<string> setErrorStatus = delegate(string text)
+            txtSelectionInput.KeyDown += delegate(object sender, KeyEventArgs e)
             {
-                lblStatus.Text = text;
-                lblStatus.ForeColor = DesignSystem.C_DestaqueVermelho;
+                if (e.Control && e.KeyCode == Keys.Enter) { btnSelectParts.PerformClick(); e.SuppressKeyPress = true; }
             };
 
-            Action applySearchFilter = delegate
+            Action<string, string, string, Action> run = delegate(string busy, string ok, string fail, Action action)
             {
-                string query = NormalizeSearchForFilter(txtSearch.Text);
-                int visibleCount = 0;
-                var visibleTabs = new HashSet<TabPage>();
-
-                foreach (KeyValuePair<GroupBox, List<Control>> groupEntry in filterRowsByGroup)
-                {
-                    GroupBox group = groupEntry.Key;
-                    List<Control> rows = groupEntry.Value;
-                    bool groupVisible = false;
-
-                    for (int i = 0; i < rows.Count; i++)
-                    {
-                        Control row = rows[i];
-                        string keywords;
-                        if (!filterKeywordsByRow.TryGetValue(row, out keywords))
-                        {
-                            keywords = string.Empty;
-                        }
-
-                        bool rowVisible = MatchesFilterQuery(keywords, query);
-                        row.Visible = rowVisible;
-                        if (rowVisible)
-                        {
-                            groupVisible = true;
-                            visibleCount++;
-                        }
-                    }
-
-                    group.Visible = groupVisible;
-
-                    if (groupVisible)
-                    {
-                        TabPage ownerTab;
-                        if (groupToTab.TryGetValue(group, out ownerTab))
-                        {
-                            visibleTabs.Add(ownerTab);
-                        }
-                    }
-                }
-
-                lblNoResults.Visible = !string.IsNullOrEmpty(query) && visibleCount == 0;
-
-                if (!string.IsNullOrEmpty(query) && visibleTabs.Count > 0)
-                {
-                    if (tabs.SelectedTab == null || !visibleTabs.Contains(tabs.SelectedTab))
-                    {
-                        for (int i = 0; i < tabs.TabPages.Count; i++)
-                        {
-                            TabPage page = tabs.TabPages[i];
-                            if (visibleTabs.Contains(page))
-                            {
-                                tabs.SelectedTab = page;
-                                break;
-                            }
-                        }
-                    }
-                }
-            };
-
-            txtSearch.TextChanged += delegate { applySearchFilter(); };
-
-            // Handlers com feedback de status
-            btnGeral.Click += delegate {
                 var prev = Cursor.Current;
                 Cursor.Current = Cursors.WaitCursor;
-                setInfoStatus("Gerando relatorio do modelo...");
+                setStatus(busy, DesignSystem.C_TextoSecundario);
+
                 try
                 {
-                    string r = ReportBuilder.BuildReport();
-                    if (!string.IsNullOrEmpty(r))
-                    {
-                        ReportWindow.ShowReport(r);
-                        setSuccessStatus("Relatorio do modelo gerado.");
-                    }
-                    else
-                    {
-                        setSuccessStatus("Operacao concluida.");
-                    }
+                    action();
+                    setStatus(ok, DesignSystem.C_Sucesso);
                 }
                 catch (Exception ex)
                 {
-                    setErrorStatus("Falha ao gerar relatorio.");
-                    MessageBox.Show("Erro ao gerar relatorio do modelo: " + ex.Message, "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    setStatus(fail, DesignSystem.C_Erro);
+                    MessageBox.Show(fail + "\n\n" + ex.Message, "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
-                finally { Cursor.Current = prev; }
+                finally
+                {
+                    Cursor.Current = prev;
+                }
             };
 
-            btnSel.Click += delegate {
-                var prev = Cursor.Current;
-                Cursor.Current = Cursors.WaitCursor;
-                setInfoStatus("Lendo pecas selecionadas...");
-                try
-                {
-                    string r = ReportBuilder.BuildSelectedPartsReport();
-                    if (!string.IsNullOrEmpty(r))
-                    {
-                        ReportWindow.ShowReport(r);
-                        setSuccessStatus("Relatorio de selecao gerado.");
-                    }
-                    else
-                    {
-                        setSuccessStatus("Operacao concluida.");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    setErrorStatus("Falha ao ler selecao.");
-                    MessageBox.Show("Erro ao ler pecas selecionadas: " + ex.Message, "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-                finally { Cursor.Current = prev; }
+            btnSelectParts.Click += delegate
+            {
+                run("Selecionando...", "Selecao concluida.", "Falha ao selecionar.",
+                    delegate { AssemblySelectionHelper.SelectAssemblies(txtSelectionInput.Text); });
             };
 
-            btnMaterialAll.Click += delegate {
-                var prev = Cursor.Current;
-                Cursor.Current = Cursors.WaitCursor;
-                setInfoStatus("Gerando resumo de materiais do modelo...");
-                try
-                {
-                    string r = MaterialSummary.BuildMaterialReport(false);
-                    if (!string.IsNullOrEmpty(r))
-                    {
-                        ReportWindow.ShowReport(r, "Resumo de Materiais (Modelo)");
-                        setSuccessStatus("Resumo de materiais do modelo gerado.");
-                    }
-                    else
-                    {
-                        setSuccessStatus("Operacao concluida.");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    setErrorStatus("Falha no resumo de materiais.");
-                    MessageBox.Show("Erro ao gerar resumo de materiais: " + ex.Message, "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-                finally { Cursor.Current = prev; }
+            btnSelectFromDraw.Click += delegate
+            {
+                run("Buscando...", "Peca selecionada.", "Falha no vinculo desenho-modelo.",
+                    delegate { DrawingModelLinker.SelectModelPartFromDrawingMark(txtDrawingMark.Text); });
             };
 
-            btnMaterialSel.Click += delegate {
-                var prev = Cursor.Current;
-                Cursor.Current = Cursors.WaitCursor;
-                setInfoStatus("Gerando resumo de materiais da selecao...");
-                try
-                {
-                    string r = MaterialSummary.BuildMaterialReport(true);
-                    if (!string.IsNullOrEmpty(r))
-                    {
-                        ReportWindow.ShowReport(r, "Resumo de Materiais (Selecao)");
-                        setSuccessStatus("Resumo de materiais da selecao gerado.");
-                    }
-                    else
-                    {
-                        setSuccessStatus("Operacao concluida.");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    setErrorStatus("Falha no resumo de materiais.");
-                    MessageBox.Show("Erro ao gerar resumo de materiais: " + ex.Message, "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-                finally { Cursor.Current = prev; }
+            btnCompare.Click += delegate
+            {
+                run("Comparando...", "Comparacao concluida.", "Falha na comparacao.",
+                    delegate { AssemblyComparator.CompareSelectedAssemblies(); });
             };
 
-            btnSelectParts.Click += delegate {
-                var prev = Cursor.Current;
-                Cursor.Current = Cursors.WaitCursor;
-                setInfoStatus("Selecionando pecas informadas...");
-                try
-                {
-                    AssemblySelectionHelper.SelectAssemblies(txtSelectionInput.Text);
-                    setSuccessStatus("Selecao atualizada.");
-                }
-                catch (Exception ex)
-                {
-                    setErrorStatus("Falha ao selecionar pecas.");
-                    MessageBox.Show("Erro ao selecionar pecas: " + ex.Message, "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-                finally { Cursor.Current = prev; }
-            };
-
-            btnSelectFromDraw.Click += delegate {
-                var prev = Cursor.Current;
-                Cursor.Current = Cursors.WaitCursor;
-                setInfoStatus("Buscando peca base a partir do desenho...");
-                try
-                {
-                    DrawingModelLinker.SelectModelPartFromDrawingMark(txtDrawingMark.Text);
-                    setSuccessStatus("Vinculo desenho-modelo executado.");
-                }
-                catch (Exception ex)
-                {
-                    setErrorStatus("Falha no vinculo desenho-modelo.");
-                    MessageBox.Show("Erro no vinculo desenho-modelo: " + ex.Message, "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-                finally { Cursor.Current = prev; }
-            };
-
-            btnRepair.Click += delegate {
-                var prev = Cursor.Current;
-                Cursor.Current = Cursors.WaitCursor;
-                setInfoStatus("Enviando comando de reparo ao Tekla...");
-                try
-                {
-                    TeklaCommands.RunModelRepair(runtime);
-                    setSuccessStatus("Comando de reparo enviado.");
-                }
-                catch (Exception ex)
-                {
-                    setErrorStatus("Falha ao acionar reparo.");
-                    MessageBox.Show("Erro ao acionar reparo: " + ex.Message, "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-                finally { Cursor.Current = prev; }
-            };
-
-            btnCompare.Click += delegate {
-                var prev = Cursor.Current;
-                Cursor.Current = Cursors.WaitCursor;
-                setInfoStatus("Comparando conjuntos selecionados...");
-                try
-                {
-                    AssemblyComparator.CompareSelectedAssemblies();
-                    setSuccessStatus("Comparacao de conjuntos concluida.");
-                }
-                catch (Exception ex)
-                {
-                    setErrorStatus("Falha na comparacao de conjuntos.");
-                    MessageBox.Show("Erro na comparacao de conjuntos: " + ex.Message, "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-                finally { Cursor.Current = prev; }
-            };
-
-            btnWeightAll.Click += delegate {
-                var prev = Cursor.Current;
-                Cursor.Current = Cursors.WaitCursor;
-                setInfoStatus("Gerando resumo de peso do modelo...");
-                try
-                {
-                    string r = WeightSummary.BuildWeightByPhaseReport();
-                    if (!string.IsNullOrEmpty(r))
+            btnNumberCheck.Click += delegate
+            {
+                run("Verificando...", "Verificacao concluida.", "Falha na verificacao.",
+                    delegate
                     {
-                        ReportWindow.ShowReport(r, "Resumo de Peso por Fase");
-                        setSuccessStatus("Resumo de peso do modelo gerado.");
-                    }
-                    else
-                    {
-                        setSuccessStatus("Operacao concluida.");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    setErrorStatus("Falha no resumo de peso.");
-                    MessageBox.Show("Erro ao gerar resumo de peso: " + ex.Message, "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-                finally { Cursor.Current = prev; }
+                        string report = NumberingChecker.CheckNumberingFromSelection();
+                        if (!string.IsNullOrEmpty(report))
+                            ReportWindow.ShowReport(report, "Verificacao de Numeracao");
+                    });
             };
 
-            btnWeightSel.Click += delegate {
-                var prev = Cursor.Current;
-                Cursor.Current = Cursors.WaitCursor;
-                setInfoStatus("Gerando resumo de peso da selecao...");
-                try
-                {
-                    string r = WeightSummary.BuildWeightByPhaseReportSelected();
-                    if (!string.IsNullOrEmpty(r))
-                    {
-                        ReportWindow.ShowReport(r, "Resumo de Peso (Selecao)");
-                        setSuccessStatus("Resumo de peso da selecao gerado.");
-                    }
-                    else
-                    {
-                        setSuccessStatus("Operacao concluida.");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    setErrorStatus("Falha no resumo de peso.");
-                    MessageBox.Show("Erro ao gerar resumo de peso: " + ex.Message, "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-                finally { Cursor.Current = prev; }
+            btnRepair.Click += delegate
+            {
+                run("Reparando...", "Reparo enviado.", "Falha ao acionar reparo.",
+                    delegate { TeklaCommands.RunModelRepair(runtime); });
             };
 
-            btnNumberCheck.Click += delegate {
-                var prev = Cursor.Current;
-                Cursor.Current = Cursors.WaitCursor;
-                setInfoStatus("Verificando numeracao dos prefixos...");
-                try
-                {
-                    string r = NumberingChecker.CheckNumberingFromSelection();
-                    if (!string.IsNullOrEmpty(r))
-                    {
-                        ReportWindow.ShowReport(r, "Verificacao de Numeracao");
-                        setSuccessStatus("Verificacao de numeracao concluida.");
-                    }
-                    else
-                    {
-                        setSuccessStatus("Operacao concluida.");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    setErrorStatus("Falha na verificacao de numeracao.");
-                    MessageBox.Show("Erro na verificacao de numeracao: " + ex.Message, "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-                finally { Cursor.Current = prev; }
-            };
-
-            mainLayout.Controls.Add(headerPanel, 0, 0);
-            mainLayout.Controls.Add(contentPanel, 0, 1);
-            mainLayout.Controls.Add(footerPanel, 0, 2);
-            form.Controls.Add(mainLayout);
+            // ?????????????????????????????????????????????????????????????????????????????????????????????????????????
+            // MONTAR
+            // ?????????????????????????????????????????????????????????????????????????????????????????????????????????
+            form.Controls.Add(body);
+            form.Controls.Add(footer);
+            form.Controls.Add(header); // header por ultimo = renderiza no topo (DockStyle.Top)
             form.AcceptButton = btnClose;
             form.CancelButton = btnClose;
 
-            applySearchFilter();
             form.ShowDialog();
         }
     }
 
-    private static TabPage CreateTabPageWithLayout(TabControl tabs, string title, Color backColor, out TableLayoutPanel layout)
+    // Linha separadora fina ??? espa??amento visual entre blocos
+    private static Panel BuildSeparator()
     {
-        var tab = new TabPage(title);
-        tab.Padding = new Padding(0);
-        tab.BackColor = backColor;
-
-        var scrollPanel = new Panel();
-        scrollPanel.Dock = DockStyle.Fill;
-        scrollPanel.AutoScroll = true;
-        scrollPanel.Padding = new Padding(12);
-        scrollPanel.BackColor = backColor;
-
-        var contentLayout = DesignSystem.CriarLayoutVertical();
-        contentLayout.Dock = DockStyle.Top;
-
-        scrollPanel.SizeChanged += delegate
-        {
-            contentLayout.Width = Math.Max(0, scrollPanel.ClientSize.Width - scrollPanel.Padding.Horizontal);
-        };
-        contentLayout.Width = Math.Max(0, scrollPanel.ClientSize.Width - scrollPanel.Padding.Horizontal);
-
-        scrollPanel.Controls.Add(contentLayout);
-        tab.Controls.Add(scrollPanel);
-        tabs.TabPages.Add(tab);
-        layout = contentLayout;
-
-        return tab;
-    }
-
-    private static void StyleGroup(GroupBox group, Color backColor, Color titleColor)
-    {
-        if (group == null)
-        {
-            return;
-        }
-
-        group.BackColor = backColor;
-        group.ForeColor = titleColor;
-        group.Padding = new Padding(12, 10, 12, 12);
-        group.Margin = new Padding(0, 0, 0, 12);
-    }
-
-    private static Color ShiftColor(Color color, int delta)
-    {
-        int r = Math.Max(0, Math.Min(255, color.R + delta));
-        int g = Math.Max(0, Math.Min(255, color.G + delta));
-        int b = Math.Max(0, Math.Min(255, color.B + delta));
-        return Color.FromArgb(r, g, b);
-    }
-
-    private static bool MatchesFilterQuery(string keywords, string query)
-    {
-        if (string.IsNullOrEmpty(query))
-        {
-            return true;
-        }
-
-        if (string.IsNullOrEmpty(keywords))
-        {
-            return false;
-        }
-
-        string[] terms = query.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-        for (int i = 0; i < terms.Length; i++)
-        {
-            if (!keywords.Contains(terms[i]))
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private static string NormalizeSearchForFilter(string text)
-    {
-        if (string.IsNullOrWhiteSpace(text))
-        {
-            return string.Empty;
-        }
-
-        var sb = new StringBuilder(text.Length);
-        for (int i = 0; i < text.Length; i++)
-        {
-            char c = text[i];
-            if (char.IsLetterOrDigit(c))
-            {
-                sb.Append(char.ToUpperInvariant(c));
-            }
-            else if (char.IsWhiteSpace(c))
-            {
-                sb.Append(' ');
-            }
-        }
-
-        string normalized = sb.ToString().Trim();
-        while (normalized.Contains("  "))
-        {
-            normalized = normalized.Replace("  ", " ");
-        }
-
-        return normalized;
+        var sep = new Panel();
+        sep.Dock = DockStyle.Fill;
+        sep.BackColor = Color.Transparent;
+        sep.Margin = new Padding(0, 5, 0, 5);
+        var line = new Panel();
+        line.Height = 1;
+        line.Dock = DockStyle.Bottom;
+        line.BackColor = DesignSystem.C_BordaLeve;
+        sep.Controls.Add(line);
+        return sep;
     }
 }
 
@@ -1083,120 +532,6 @@ internal static class ModelHelper
 }
 
 
-internal static class ReportBuilder
-{
-    public static string BuildReport()
-    {
-        var model = ModelHelper.GetConnectedModel();
-        if (model == null) return null;
-
-        var info = model.GetInfo();
-        var projectInfo = model.GetProjectInfo();
-
-        var sb = new StringBuilder();
-        sb.AppendLine("Relatorio do Modelo");
-        sb.AppendLine();
-        sb.AppendLine("Modelo");
-        sb.AppendLine(string.Format("Nome: {0}", Formatters.FormatValue(info.ModelName)));
-        sb.AppendLine(string.Format("Caminho: {0}", Formatters.FormatValue(info.ModelPath)));
-        sb.AppendLine(string.Format("Fase atual: {0}", info.CurrentPhase));
-        sb.AppendLine(string.Format("Modelo compartilhado: {0}", Formatters.FormatBool(info.SharedModel)));
-        sb.AppendLine(string.Format("Modelo single user: {0}", Formatters.FormatBool(info.SingleUserModel)));
-        sb.AppendLine(string.Format("North direction: {0}", Formatters.FormatValue(info.NorthDirection)));
-        sb.AppendLine();
-        sb.AppendLine("Projeto");
-        if (projectInfo == null)
-        {
-            sb.AppendLine("Nao foi possivel obter ProjectInfo.");
-        }
-        else
-        {
-            sb.AppendLine(string.Format("Nome: {0}", Formatters.FormatValue(projectInfo.Name)));
-            sb.AppendLine(string.Format("Numero: {0}", Formatters.FormatValue(projectInfo.ProjectNumber)));
-            sb.AppendLine(string.Format("Descricao: {0}", Formatters.FormatValue(projectInfo.Description)));
-            sb.AppendLine(string.Format("Inicio: {0}", Formatters.FormatDate(projectInfo.StartDate)));
-            sb.AppendLine(string.Format("Termino: {0}", Formatters.FormatDate(projectInfo.EndDate)));
-            sb.AppendLine(string.Format("Designer: {0}", Formatters.FormatValue(projectInfo.Designer)));
-            sb.AppendLine(string.Format("Objeto: {0}", Formatters.FormatValue(projectInfo.Object)));
-            sb.AppendLine(string.Format("Localizacao: {0}", Formatters.FormatValue(projectInfo.Location)));
-            sb.AppendLine(string.Format("Endereco: {0}", Formatters.FormatValue(projectInfo.Address)));
-            sb.AppendLine(string.Format("Caixa postal: {0}", Formatters.FormatValue(projectInfo.PostalBox)));
-            sb.AppendLine(string.Format("Cidade: {0}", Formatters.FormatValue(projectInfo.Town)));
-            sb.AppendLine(string.Format("Regiao: {0}", Formatters.FormatValue(projectInfo.Region)));
-            sb.AppendLine(string.Format("CEP: {0}", Formatters.FormatValue(projectInfo.PostalCode)));
-            sb.AppendLine(string.Format("Pais: {0}", Formatters.FormatValue(projectInfo.Country)));
-            sb.AppendLine(string.Format("Construtora: {0}", Formatters.FormatValue(projectInfo.Builder)));
-            sb.AppendLine(string.Format("Info1: {0}", Formatters.FormatValue(projectInfo.Info1)));
-            sb.AppendLine(string.Format("Info2: {0}", Formatters.FormatValue(projectInfo.Info2)));
-            sb.AppendLine(string.Format("GUID: {0}", Formatters.FormatValue(projectInfo.GUID)));
-        }
-
-        return sb.ToString();
-    }
-
-    public static string BuildSelectedPartsReport()
-    {
-        var model = ModelHelper.GetConnectedModel();
-        if (model == null) return null;
-
-        var selector = new ModelUI.ModelObjectSelector();
-        var selected = selector.GetSelectedObjects();
-        if (selected == null)
-        {
-            MessageBox.Show("Nenhum objeto selecionado.");
-            return null;
-        }
-
-        var details = new StringBuilder();
-        int totalSelected = 0;
-        int partsCount = 0;
-
-        while (selected.MoveNext())
-        {
-            totalSelected++;
-            var part = selected.Current as Part;
-            if (part == null)
-            {
-                continue;
-            }
-
-            partsCount++;
-            details.AppendLine(string.Format("Peca {0}", partsCount));
-            details.AppendLine(string.Format("Tipo: {0}", Formatters.FormatValue(part.GetType().Name)));
-            details.AppendLine(string.Format("Nome: {0}", Formatters.FormatValue(part.Name)));
-            details.AppendLine(string.Format("Perfil: {0}", Formatters.FormatValue(part.Profile == null ? null : part.Profile.ProfileString)));
-            details.AppendLine(string.Format("Material: {0}", Formatters.FormatValue(part.Material == null ? null : part.Material.MaterialString)));
-            details.AppendLine(string.Format("Classe: {0}", Formatters.FormatValue(part.Class)));
-            details.AppendLine(string.Format("Acabamento: {0}", Formatters.FormatValue(part.Finish)));
-            details.AppendLine(string.Format("Fase: {0}", Formatters.FormatPhaseNumber(part)));
-            details.AppendLine(string.Format("GUID: {0}", Formatters.FormatValue(part.Identifier == null ? null : part.Identifier.GUID.ToString())));
-            details.AppendLine();
-        }
-
-        if (totalSelected == 0)
-        {
-            MessageBox.Show("Nenhum objeto selecionado.");
-            return null;
-        }
-
-        if (partsCount == 0)
-        {
-            MessageBox.Show("Nao ha pecas selecionadas. Selecione pecas e tente novamente.");
-            return null;
-        }
-
-        var sb = new StringBuilder();
-        sb.AppendLine("Pecas selecionadas");
-        sb.AppendLine(string.Format("Total de objetos selecionados: {0}", totalSelected));
-        sb.AppendLine(string.Format("Total de pecas: {0}", partsCount));
-        sb.AppendLine();
-        sb.Append(details.ToString());
-
-        return sb.ToString();
-    }
-}
-
-
 internal static class ReportWindow
 {
     public static void ShowReport(string text)
@@ -1208,16 +543,22 @@ internal static class ReportWindow
     {
         using (var form = new Form())
         using (var textBox = new RichTextBox())
+        using (var txtFilter = new TextBox())
+        using (var lblFilterStatus = new Label())
         using (var copyButton = new Button())
         using (var closeButton = new Button())
+        using (var exportButton = new Button())
         using (var panel = new TableLayoutPanel())
+        using (var filterPanel = new TableLayoutPanel())
         using (var buttonPanel = new FlowLayoutPanel())
         {
+            string reportText = text ?? string.Empty;
+
             form.Text = title;
             form.StartPosition = FormStartPosition.CenterScreen;
             form.Size = new Size(720, 520);
-            form.MinimumSize = new Size(540, 360);
-            form.BackColor = DesignSystem.C_FundoForm;
+            form.MinimumSize = new Size(500, 340);
+            form.BackColor = DesignSystem.C_Fundo;
             form.Font = DesignSystem.F_Texto;
 
             textBox.Multiline = true;
@@ -1226,47 +567,72 @@ internal static class ReportWindow
             textBox.WordWrap = false;
             textBox.Dock = DockStyle.Fill;
             textBox.Font = DesignSystem.F_Mono;
-            textBox.BackColor = DesignSystem.C_CardFundo;
+            textBox.BackColor = DesignSystem.C_Superficie;
             textBox.ForeColor = DesignSystem.C_TextoPrimario;
-            textBox.Clear();
-            AppendColoredText(textBox, text);
+            textBox.BorderStyle = BorderStyle.FixedSingle;
 
-            copyButton.Text = "Copiar";
-            copyButton.AutoSize = true;
-            copyButton.FlatStyle = FlatStyle.Flat;
-            copyButton.FlatAppearance.BorderSize = 1;
-            copyButton.FlatAppearance.BorderColor = DesignSystem.C_Borda;
-            copyButton.BackColor = DesignSystem.C_CardFundo;
-            copyButton.ForeColor = DesignSystem.C_TextoPrimario;
-            copyButton.Click += delegate { 
-                try
+            filterPanel.Dock = DockStyle.Fill;
+            filterPanel.ColumnCount = 2;
+            filterPanel.RowCount = 1;
+            filterPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            filterPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            filterPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            filterPanel.Margin = new Padding(0, 0, 0, 6);
+
+            txtFilter.Dock = DockStyle.Fill;
+            txtFilter.Margin = new Padding(0, 0, 8, 0);
+            txtFilter.Font = DesignSystem.F_Texto;
+            txtFilter.BorderStyle = BorderStyle.FixedSingle;
+            txtFilter.BackColor = DesignSystem.C_Superficie;
+            txtFilter.ForeColor = DesignSystem.C_TextoPrimario;
+
+            lblFilterStatus.Text = "";
+            lblFilterStatus.AutoSize = true;
+            lblFilterStatus.Margin = new Padding(0, 6, 0, 0);
+            lblFilterStatus.ForeColor = DesignSystem.C_TextoSecundario;
+            lblFilterStatus.Font = DesignSystem.F_TextoPequeno;
+
+            filterPanel.Controls.Add(txtFilter, 0, 0);
+            filterPanel.Controls.Add(lblFilterStatus, 1, 0);
+
+            // --- Botoes ---
+            Action<Button, string, bool> styleButton = delegate(Button b, string t, bool primary)
+            {
+                b.Text = t;
+                b.AutoSize = false;
+                b.Size = new Size(90, 30);
+                b.FlatStyle = FlatStyle.Flat;
+                b.FlatAppearance.BorderSize = 1;
+                b.Font = DesignSystem.F_Botao;
+                b.Cursor = Cursors.Hand;
+
+                if (primary)
                 {
-                    Clipboard.SetText(textBox.Text); 
+                    b.BackColor = DesignSystem.C_Destaque;
+                    b.ForeColor = DesignSystem.C_TextoClaro;
+                    b.FlatAppearance.BorderColor = DesignSystem.C_DestaqueHover;
                 }
-                catch
+                else
                 {
-                    MessageBox.Show("Nao foi possivel copiar. Tente novamente.");
+                    b.BackColor = DesignSystem.C_Superficie;
+                    b.ForeColor = DesignSystem.C_TextoPrimario;
+                    b.FlatAppearance.BorderColor = DesignSystem.C_Borda;
                 }
             };
 
-            closeButton.Text = "Fechar";
-            closeButton.AutoSize = true;
+            styleButton(copyButton, "Copiar", false);
+            styleButton(exportButton, "Exportar", false);
+            styleButton(closeButton, "Fechar", true);
             closeButton.DialogResult = DialogResult.OK;
-            closeButton.FlatStyle = FlatStyle.Flat;
-            closeButton.FlatAppearance.BorderSize = 1;
-            closeButton.FlatAppearance.BorderColor = DesignSystem.C_Borda;
-            closeButton.BackColor = DesignSystem.C_CardFundo;
-            closeButton.ForeColor = DesignSystem.C_TextoPrimario;
 
-            var exportButton = new Button();
-            exportButton.Text = "Exportar";
-            exportButton.AutoSize = true;
-            exportButton.FlatStyle = FlatStyle.Flat;
-            exportButton.FlatAppearance.BorderSize = 1;
-            exportButton.FlatAppearance.BorderColor = DesignSystem.C_Borda;
-            exportButton.BackColor = DesignSystem.C_CardFundo;
-            exportButton.ForeColor = DesignSystem.C_DestaqueAzul;
-            exportButton.Click += delegate {
+            copyButton.Click += delegate
+            {
+                try { Clipboard.SetText(textBox.Text); }
+                catch { MessageBox.Show("Nao foi possivel copiar."); }
+            };
+
+            exportButton.Click += delegate
+            {
                 try
                 {
                     using (var sfd = new SaveFileDialog())
@@ -1277,45 +643,110 @@ internal static class ReportWindow
                         if (sfd.ShowDialog() == DialogResult.OK)
                         {
                             File.WriteAllText(sfd.FileName, textBox.Text, Encoding.UTF8);
-                            MessageBox.Show("Arquivo salvo com sucesso!", "Exportar", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            MessageBox.Show("Arquivo salvo.", "Exportar", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }
                     }
                 }
                 catch (Exception exFile)
                 {
-                    MessageBox.Show("Nao foi possivel salvar o arquivo: " + exFile.Message);
+                    MessageBox.Show("Erro ao salvar: " + exFile.Message);
+                }
+            };
+
+            Action refreshFilter = delegate
+            {
+                int matches;
+                string filtered = FilterReportLines(reportText, txtFilter.Text, out matches);
+                textBox.Clear();
+                AppendColoredText(textBox, filtered);
+
+                if (string.IsNullOrWhiteSpace(txtFilter.Text))
+                {
+                    lblFilterStatus.Text = "";
+                }
+                else if (matches == 0)
+                {
+                    lblFilterStatus.Text = "0 resultados";
+                    lblFilterStatus.ForeColor = DesignSystem.C_Erro;
+                }
+                else
+                {
+                    lblFilterStatus.Text = string.Format("{0} linha(s)", matches);
+                    lblFilterStatus.ForeColor = DesignSystem.C_TextoSecundario;
+                }
+            };
+
+            txtFilter.TextChanged += delegate { refreshFilter(); };
+
+            txtFilter.KeyDown += delegate(object sender, KeyEventArgs e)
+            {
+                if (e.KeyCode == Keys.Escape)
+                {
+                    txtFilter.Text = string.Empty;
+                    e.SuppressKeyPress = true;
                 }
             };
 
             buttonPanel.FlowDirection = FlowDirection.RightToLeft;
             buttonPanel.Dock = DockStyle.Fill;
             buttonPanel.AutoSize = true;
+            buttonPanel.Padding = new Padding(0, 6, 0, 0);
+            buttonPanel.WrapContents = false;
             buttonPanel.Controls.Add(closeButton);
             buttonPanel.Controls.Add(exportButton);
             buttonPanel.Controls.Add(copyButton);
 
             panel.Dock = DockStyle.Fill;
             panel.ColumnCount = 1;
-            panel.RowCount = 2;
-            panel.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+            panel.RowCount = 3;
             panel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            panel.Controls.Add(textBox, 0, 0);
-            panel.Controls.Add(buttonPanel, 0, 1);
+            panel.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+            panel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            panel.Padding = new Padding(12);
+            panel.Controls.Add(filterPanel, 0, 0);
+            panel.Controls.Add(textBox, 0, 1);
+            panel.Controls.Add(buttonPanel, 0, 2);
 
             form.Controls.Add(panel);
             form.AcceptButton = closeButton;
             form.CancelButton = closeButton;
 
+            refreshFilter();
             form.ShowDialog();
         }
     }
 
+    private static string FilterReportLines(string source, string query, out int matches)
+    {
+        matches = 0;
+        if (string.IsNullOrEmpty(source)) return string.Empty;
+
+        string normalized = source.Replace("\r\n", "\n");
+        string[] lines = normalized.Split('\n');
+
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            matches = lines.Length;
+            return source;
+        }
+
+        string search = query.Trim();
+        var sb = new StringBuilder();
+        for (int i = 0; i < lines.Length; i++)
+        {
+            string line = lines[i];
+            if (line.IndexOf(search, StringComparison.OrdinalIgnoreCase) < 0) continue;
+            if (matches > 0) sb.AppendLine();
+            sb.Append(line);
+            matches++;
+        }
+
+        return sb.ToString();
+    }
+
     private static void AppendColoredText(RichTextBox box, string text)
     {
-        if (string.IsNullOrEmpty(text))
-        {
-            return;
-        }
+        if (string.IsNullOrEmpty(text)) return;
 
         string normalized = text.Replace("\r\n", "\n");
         string[] lines = normalized.Split('\n');
@@ -1326,15 +757,15 @@ internal static class ReportWindow
 
             if (line.StartsWith("[OK]"))
             {
-                color = Color.ForestGreen;
+                color = DesignSystem.C_Sucesso;
             }
             else if (line.StartsWith("[X]"))
             {
-                color = Color.Firebrick;
+                color = DesignSystem.C_Erro;
             }
             else if (line.StartsWith("[~]"))
             {
-                color = Color.FromArgb(180, 130, 0);
+                color = DesignSystem.C_Atencao;
             }
             else if (line.StartsWith("==="))
             {
@@ -1342,11 +773,11 @@ internal static class ReportWindow
             }
             else if (line.Contains("APROVADO"))
             {
-                color = Color.ForestGreen;
+                color = DesignSystem.C_Sucesso;
             }
             else if (line.Contains("REPROVADO"))
             {
-                color = Color.Firebrick;
+                color = DesignSystem.C_Erro;
             }
 
             box.SelectionStart = box.TextLength;
@@ -2491,356 +1922,6 @@ internal static class AssemblyComparator
         return string.Equals(left.Trim(), right.Trim(), StringComparison.OrdinalIgnoreCase);
     }
 }
-
-
-internal static class WeightSummary
-{
-    public static string BuildWeightByPhaseReport()
-    {
-        Model model = ModelHelper.GetConnectedModel();
-        if (model == null) return null;
-
-        var enumerator = model.GetModelObjectSelector().GetAllObjectsWithType(ModelObject.ModelObjectEnum.ASSEMBLY);
-        if (enumerator == null)
-        {
-            MessageBox.Show("Nao foi possivel obter os conjuntos do modelo.");
-            return null;
-        }
-
-        // Fase -> { count, weightNet, weightGross }
-        var phaseData = new SortedDictionary<int, PhaseInfo>();
-        int totalCount = 0;
-
-        var previousCursor = Cursor.Current;
-        Cursor.Current = Cursors.WaitCursor;
-        try
-        {
-            while (enumerator.MoveNext())
-            {
-                Assembly assembly = enumerator.Current as Assembly;
-                if (assembly == null) continue;
-
-                int phaseNumber = GetPhaseNumber(assembly);
-                double weightNet = GetDoubleProperty(assembly, "WEIGHT_NET");
-                double weightGross = GetDoubleProperty(assembly, "WEIGHT_GROSS");
-
-                PhaseInfo info;
-                if (!phaseData.TryGetValue(phaseNumber, out info))
-                {
-                    info = new PhaseInfo();
-                    phaseData[phaseNumber] = info;
-                }
-
-                info.Count++;
-                info.WeightNet += weightNet;
-                info.WeightGross += weightGross;
-                totalCount++;
-            }
-        }
-        finally
-        {
-            Cursor.Current = previousCursor;
-        }
-
-        if (totalCount == 0)
-        {
-            MessageBox.Show("Nenhum conjunto encontrado no modelo.");
-            return null;
-        }
-
-        return FormatReport(phaseData, totalCount);
-    }
-
-    public static string BuildWeightByPhaseReportSelected()
-    {
-        Model model = ModelHelper.GetConnectedModel();
-        if (model == null) return null;
-
-        ModelUI.ModelObjectSelector uiSelector = new ModelUI.ModelObjectSelector();
-        ModelObjectEnumerator enumSelected = uiSelector.GetSelectedObjects();
-        if (enumSelected == null)
-        {
-            MessageBox.Show("Nenhum objeto selecionado.");
-            return null;
-        }
-
-        var phaseData = new SortedDictionary<int, PhaseInfo>();
-        int totalCount = 0;
-
-        while (enumSelected.MoveNext())
-        {
-            Assembly assembly = enumSelected.Current as Assembly;
-            if (assembly == null) continue;
-
-            int phaseNumber = GetPhaseNumber(assembly);
-            double weightNet = GetDoubleProperty(assembly, "WEIGHT_NET");
-            double weightGross = GetDoubleProperty(assembly, "WEIGHT_GROSS");
-
-            PhaseInfo info;
-            if (!phaseData.TryGetValue(phaseNumber, out info))
-            {
-                info = new PhaseInfo();
-                phaseData[phaseNumber] = info;
-            }
-
-            info.Count++;
-            info.WeightNet += weightNet;
-            info.WeightGross += weightGross;
-            totalCount++;
-        }
-
-        if (totalCount == 0)
-        {
-            MessageBox.Show("Nenhum conjunto selecionado.");
-            return null;
-        }
-
-        return FormatReport(phaseData, totalCount);
-    }
-
-    private static string FormatReport(SortedDictionary<int, PhaseInfo> phaseData, int totalCount)
-    {
-        StringBuilder sb = new StringBuilder();
-        sb.AppendLine("=== RESUMO DE PESO POR FASE ===");
-        sb.AppendLine(string.Format("Data: {0}", DateTime.Now.ToString("yyyy-MM-dd HH:mm")));
-        sb.AppendLine();
-
-        double grandWeightNet = 0;
-        double grandWeightGross = 0;
-
-        foreach (var kvp in phaseData)
-        {
-            int phase = kvp.Key;
-            PhaseInfo info = kvp.Value;
-
-            sb.AppendLine(string.Format("--- Fase {0} ---", phase));
-            sb.AppendLine(string.Format("  Conjuntos:   {0}", info.Count));
-            sb.AppendLine(string.Format("  Peso liquido:  {0} kg", FormatWeight(info.WeightNet)));
-            sb.AppendLine(string.Format("  Peso bruto:    {0} kg", FormatWeight(info.WeightGross)));
-            sb.AppendLine();
-
-            grandWeightNet += info.WeightNet;
-            grandWeightGross += info.WeightGross;
-        }
-
-        sb.AppendLine("=== TOTAL GERAL ===");
-        sb.AppendLine(string.Format("Conjuntos: {0}", totalCount));
-        sb.AppendLine(string.Format("Peso liquido total:  {0} kg  ({1} t)", FormatWeight(grandWeightNet), FormatTon(grandWeightNet)));
-        sb.AppendLine(string.Format("Peso bruto total:    {0} kg  ({1} t)", FormatWeight(grandWeightGross), FormatTon(grandWeightGross)));
-        sb.AppendLine(string.Format("Fases: {0}", phaseData.Count));
-
-        return sb.ToString();
-    }
-
-    private static int GetPhaseNumber(ModelObject obj)
-    {
-        if (obj == null) return 0;
-
-        Phase phase;
-        if (obj.GetPhase(out phase))
-        {
-            return phase.PhaseNumber;
-        }
-        return 0;
-    }
-
-    private static double GetDoubleProperty(ModelObject obj, string propertyName)
-    {
-        if (obj == null) return 0.0;
-
-        double value = 0.0;
-        if (obj.GetReportProperty(propertyName, ref value))
-        {
-            return value;
-        }
-        return 0.0;
-    }
-
-    private static string FormatWeight(double kg)
-    {
-        return string.Format("{0:N1}", kg);
-    }
-
-    private static string FormatTon(double kg)
-    {
-        return string.Format("{0:N2}", kg / 1000.0);
-    }
-
-    private class PhaseInfo
-    {
-        public int Count;
-        public double WeightNet;
-        public double WeightGross;
-    }
-}
-
-
-internal static class MaterialSummary
-    {
-        public static string BuildMaterialReport(bool onlySelected)
-        {
-            Model model = ModelHelper.GetConnectedModel();
-            if (model == null) return null;
-
-            ModelObjectEnumerator enumerator;
-            if (onlySelected)
-            {
-                var uiSelector = new ModelUI.ModelObjectSelector();
-                enumerator = uiSelector.GetSelectedObjects();
-                if (enumerator == null || enumerator.GetSize() == 0)
-                {
-                    MessageBox.Show("Nenhuma peca selecionada.", "Resumo de Materiais", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    return null;
-                }
-            }
-            else
-            {
-                enumerator = model.GetModelObjectSelector().GetAllObjectsWithType(ModelObject.ModelObjectEnum.UNKNOWN);
-                if (enumerator == null) return null;
-            }
-
-            var matProfileQuantities = new Dictionary<string, Dictionary<string, int>>(StringComparer.OrdinalIgnoreCase);
-            var matProfileWeights = new Dictionary<string, Dictionary<string, double>>(StringComparer.OrdinalIgnoreCase);
-
-            var previousCursor = Cursor.Current;
-            Cursor.Current = Cursors.WaitCursor;
-            int totalParts = 0;
-
-            try
-            {
-                int processed = 0;
-                while (enumerator.MoveNext())
-                {
-                    processed++;
-                    if (processed % 1000 == 0) Application.DoEvents();
-
-                    ModelObject obj = enumerator.Current as ModelObject;
-                    if (obj == null) continue;
-
-                    // Se a selecao retornou Assembly, extrair as parts internas
-                    Assembly assembly = obj as Assembly;
-                    if (assembly != null)
-                    {
-                        ArrayList secondaries = assembly.GetSecondaries();
-                        ProcessPart(assembly.GetMainPart() as Part, matProfileQuantities, matProfileWeights, ref totalParts);
-                        if (secondaries != null)
-                        {
-                            foreach (ModelObject sec in secondaries)
-                            {
-                                ProcessPart(sec as Part, matProfileQuantities, matProfileWeights, ref totalParts);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        Part part = obj as Part;
-                        if (part != null)
-                        {
-                            ProcessPart(part, matProfileQuantities, matProfileWeights, ref totalParts);
-                        }
-                    }
-                }
-            }
-            finally
-            {
-                Cursor.Current = previousCursor;
-            }
-
-            if (totalParts == 0)
-            {
-                MessageBox.Show("Nenhuma peca encontrada.", "Resumo de Materiais", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return null;
-            }
-
-            return FormatReport(matProfileQuantities, matProfileWeights, totalParts, onlySelected);
-        }
-
-        private static void ProcessPart(Part part, 
-            Dictionary<string, Dictionary<string, int>> matProfileQuantities, 
-            Dictionary<string, Dictionary<string, double>> matProfileWeights,
-            ref int totalParts)
-        {
-            if (part == null) return;
-
-            string material = part.Material.MaterialString;
-            string profile = part.Profile.ProfileString;
-            if (string.IsNullOrWhiteSpace(material)) material = "INDEFINIDO";
-            if (string.IsNullOrWhiteSpace(profile)) profile = "INDEFINIDO";
-
-            double weight = 0.0;
-            part.GetReportProperty("WEIGHT_NET", ref weight);
-
-            if (!matProfileQuantities.ContainsKey(material))
-            {
-                matProfileQuantities[material] = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-                matProfileWeights[material] = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
-            }
-
-            var pDict = matProfileQuantities[material];
-            if (!pDict.ContainsKey(profile)) pDict[profile] = 0;
-            pDict[profile]++;
-
-            var wDict = matProfileWeights[material];
-            if (!wDict.ContainsKey(profile)) wDict[profile] = 0;
-            wDict[profile] += weight;
-
-            totalParts++;
-        }
-
-        private static string FormatReport(
-            Dictionary<string, Dictionary<string, int>> matProfileQuantities,
-            Dictionary<string, Dictionary<string, double>> matProfileWeights,
-            int totalParts,
-            bool onlySelected)
-        {
-            StringBuilder sb = new StringBuilder();
-            sb.AppendLine("=== RESUMO DE MATERIAIS ===");
-            sb.AppendLine(string.Format("Data: {0}", DateTime.Now.ToString("yyyy-MM-dd HH:mm")));
-            sb.AppendLine(string.Format("Modalidade: {0}", onlySelected ? "Pecas selecionadas" : "Modelo inteiro"));
-            sb.AppendLine(string.Format("Total de pecas avaliadas: {0}", totalParts));
-            sb.AppendLine();
-
-            var sortedMaterials = new List<string>(matProfileQuantities.Keys);
-            sortedMaterials.Sort(StringComparer.OrdinalIgnoreCase);
-
-            double totalWeightAll = 0.0;
-
-            foreach (string material in sortedMaterials)
-            {
-                sb.AppendLine(string.Format("Material: {0}", material));
-                
-                var pDict = matProfileQuantities[material];
-                var wDict = matProfileWeights[material];
-
-                var sortedProfiles = new List<string>(pDict.Keys);
-                sortedProfiles.Sort(StringComparer.OrdinalIgnoreCase);
-
-                int subtotalQuant = 0;
-                double subtotalWeight = 0.0;
-
-                foreach (string profile in sortedProfiles)
-                {
-                    int q = pDict[profile];
-                    double w = wDict[profile];
-                    subtotalQuant += q;
-                    subtotalWeight += w;
-
-                    sb.AppendLine(string.Format("  {0,-15} | {1,5} p??s | {2,10:N1} kg", profile, q, w));
-                }
-
-                sb.AppendLine(string.Format("  Subtotal:       | {0,5} p??s | {1,10:N1} kg", subtotalQuant, subtotalWeight));
-                sb.AppendLine();
-
-                totalWeightAll += subtotalWeight;
-            }
-
-            sb.AppendLine("=== TOTAIS GERAIS ===");
-            sb.AppendLine(string.Format("Total de pecas: {0}", totalParts));
-            sb.AppendLine(string.Format("Peso Total    : {0:N1} kg", totalWeightAll));
-            
-            return sb.ToString();
-        }
-    }
 
 
 internal static class NumberingChecker
