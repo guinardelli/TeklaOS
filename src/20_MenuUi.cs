@@ -8,8 +8,8 @@ internal static class MenuUi
             // Janela compacta e fixa — tudo cabe sem scroll
             form.Text = "MarnaTeklaOS";
             form.StartPosition = FormStartPosition.CenterScreen;
-            form.Size = new Size(380, 430);
-            form.MinimumSize = new Size(320, 380);
+            form.Size = new Size(380, 480);
+            form.MinimumSize = new Size(320, 420);
             form.MaximumSize = new Size(560, 560);
             form.Font = DesignSystem.F_Texto;
             form.BackColor = DesignSystem.C_Superficie;
@@ -57,9 +57,9 @@ internal static class MenuUi
             var bodyLayout = new TableLayoutPanel();
             bodyLayout.Dock = DockStyle.Fill;
             bodyLayout.ColumnCount = 1;
-            bodyLayout.RowCount = 9;
+            bodyLayout.RowCount = 10;
             bodyLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-            // Linhas: campo | botão | sep | campo | botão | sep | btn | btn | sep+btn
+            // Linhas: campo | botão | sep | campo | botão | sep | btn | btn | btn | sep+btn
             bodyLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 52F));  // txtSelecao
             bodyLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34F));  // btnSelecionar
             bodyLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 14F));  // separador
@@ -68,6 +68,7 @@ internal static class MenuUi
             bodyLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 14F));  // separador
             bodyLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34F));  // btnComparar
             bodyLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34F));  // btnNumeracao
+            bodyLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34F));  // btnVistas3D
             bodyLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F)); // espaço + reparo
 
             // --- Bloco A: Seleção por nome ---
@@ -123,6 +124,14 @@ internal static class MenuUi
             bodyLayout.Controls.Add(btnCompare, 0, 6);
             bodyLayout.Controls.Add(btnNumberCheck, 0, 7);
 
+            // --- Bloco C2: Vistas 3D ---
+
+            var btnVistas3D = DesignSystem.CriarBotao("Criar vistas 3D", false);
+            btnVistas3D.Margin = new Padding(0, 0, 0, 0);
+            toolTip.SetToolTip(btnVistas3D, "Selecione uma peca no modelo antes de usar.\nCria um desenho com 4 perspectivas isometricas.");
+
+            bodyLayout.Controls.Add(btnVistas3D, 0, 8);
+
             // --- Bloco D: Reparo (ação destrutiva — alinhada ao rodapé) ---
             var bottomRow = new TableLayoutPanel();
             bottomRow.Dock = DockStyle.Fill;
@@ -139,7 +148,7 @@ internal static class MenuUi
 
             bottomRow.Controls.Add(new Panel(), 0, 0); // espaçador
             bottomRow.Controls.Add(btnRepair, 0, 1);
-            bodyLayout.Controls.Add(bottomRow, 0, 8);
+            bodyLayout.Controls.Add(bottomRow, 0, 9);
 
             body.Controls.Add(bodyLayout);
 
@@ -263,6 +272,12 @@ internal static class MenuUi
             {
                 run("Reparando...", "Reparo enviado.", "Falha ao acionar reparo.",
                     delegate { TeklaCommands.RunModelRepair(runtime); });
+            };
+
+            btnVistas3D.Click += delegate
+            {
+                run("Criando vistas 3D...", "Desenho criado.", "Falha ao criar vistas 3D.",
+                    delegate { IsometricViewCreator.CreateIsometricDrawing(); });
             };
 
             // ═══════════════════════════════════

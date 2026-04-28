@@ -37,3 +37,29 @@ O `NumberingSeries` revela apenas `.StartNumber` e `.Prefix`.
   - Isso jorrava o erro: *`Tekla.Structures.Drawing.UI.DrawingSelector não contém definição de GetDrawings()`*. O objeto Selector só serve para buscar o que o usuário **marcou na tela com o mouse**.
 - ✔️ `DrawingHandler.GetDrawings()` 
   - Essa simples propriedade iteradora (`DrawingEnumerator`) puxa todos os desenhos presentes no _Document Manager_ com segurança.
+
+## 6. GADrawing vs AssemblyDrawing para Vistas Customizadas
+Ao criar vistas 3D/isometricas customizadas com `CoordinateSystem` rotacionado:
+- ❌ **Evite `AssemblyDrawing`**: Cria automaticamente vistas padrao (frontal, lateral, topo) que interferem no layout.
+- ✔️ **Use `GADrawing`**: Canvas vazio. Permite inserir apenas as vistas desejadas via `new View(sheet, viewCS, displayCS, AABB)`.
+- O construtor `new GADrawing("standard")` recebe o nome do arquivo de atributos (`.ga`). Se nao existir, usa defaults internos.
+
+## 7. Construtor de View para Vistas Customizadas
+O construtor confirmado e funcional para vistas em desenhos e:
+```csharp
+var view = new Tekla.Structures.Drawing.View(sheet, viewCS, displayCS, restrictionBox);
+view.Name = "nome";
+view.Insert();
+```
+- `sheet`: obtido via `drawing.GetSheet()`
+- `viewCS`: `CoordinateSystem` com vetores rotacionados
+- `displayCS`: mesmo que `viewCS` mas com origem `(0,0,0)`
+- `restrictionBox`: `AABB` com o volume do modelo a exibir
+- Apos inserir, usar `drawing.PlaceViews()` (se disponivel) para layout automatico
+- Se `PlaceViews()` nao existir, o usuario posiciona manualmente no editor
+
+## 8. Rotacao de CoordinateSystem sem Matrix
+Para compatibilidade com o compilador C# 5.0 de macros, a rotacao de vetores do `CoordinateSystem` deve ser feita por trigonometria manual (`Math.Sin`, `Math.Cos`), sem depender de `Tekla.Structures.Geometry3d.Matrix`.
+- Rotacao em Z (azimute): aplica-se nos componentes X e Y
+- Rotacao em X (elevacao): aplica-se nos componentes Y e Z
+- Aplicar na ordem: primeiro R_z, depois R_x
